@@ -1,0 +1,20 @@
+Herix Workbench
+=======================================
+
+The program provides a GUI for the user to examine the contents of a selected spec file, possibly join together data for
+a particular point detector to increase statistics, and provide fits for the central elastic peak and for the measured
+inelastic peaks. The main windows contains different resizable widgets, that organize the data being analyzed.
+
+Version
+-------
+0.0.1 - 12/19/2017
+
+Author(s)
+---------
+Escalante, Phaulo - CO-OP Student Technical at Argonne National Laboratory
+Hammonds, John - Principal Application Developer at Argonne National Laboratory
+
+License
+-------
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.

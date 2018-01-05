@@ -29,6 +29,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setMinimumSize(1000, 650)
         self.windowSplitter = QSplitter()
         self.plotWidget = PlotWidget()
+        self.selectedDetectors = []
 
         self.CreateSpecDataSplitter()
         self.createMenuBar()
@@ -37,16 +38,17 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setCentralWidget(self.windowSplitter)
 
     def CreateSpecDataSplitter(self):
+        """Creates the QSplitter with the spec and detector widgets,"""
         self.specSplitter = QSplitter()
         self.specSplitter.setOrientation(Qt.Vertical)
-        self.CreatePlotTypeComboBox()
+        self.createPlotTypeComboBox()
 
         self.scanBrowser = ScanBrowser()
         self.scanBrowser.setFixedWidth(405)
         self.scanTypeSelector = ScanTypeSelector()
         self.scanTypeSelector.setFixedWidth(400)
         self.selectorContainer = SelectorContainer()
-        self.selectorContainer.detectorsSelected.connect(self.plotDetectors)
+        self.selectorContainer.detectorsSelected.connect(self.setSelectedPlotDetectors)
 
         self.specSplitter.addWidget(self.scanTypeSelector)
         self.specSplitter.addWidget(self.scanBrowser)
@@ -69,19 +71,30 @@ class HerixWorkbenchWindow(QMainWindow):
         fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
 
-    def CreatePlotTypeComboBox(self):
+    def createPlotTypeComboBox(self):
+        """Creates the plot type QComboBox:single or multi."""
         self.plotTypeWidget = QWidget()
         self.plotTypeWidget.setFixedWidth(400)
         hLayout = QHBoxLayout()
         self.plotTypeCB = QComboBox()
         self.plotTypeCB.addItem("Single")
         self.plotTypeCB.addItem("Multi")
+        self.plotTypeCB.currentIndexChanged.connect(self.newPlotType)
 
         hLayout.addWidget(QLabel("Plot Type: "))
         hLayout.addWidget(self.plotTypeCB)
 
         self.plotTypeWidget.setLayout(hLayout)
 
+    def newPlotType(self, int):
+        """This method gets called when the plot type QCombox changes index."""
+        plotType = self.plotTypeCB.currentText()
+        if plotType is "Single":
+            # Need to get the #S info
+            self.plotWidget.singlePlot()
+        else:
+            # Need to get the #S info
+            self.plotWidget.multiPlot(self.selectedDetectors)
 
     def openSpecFile(self):
         fileName, specFilterName = QFileDialog.getOpenFileName(self, "Open spec file", None, "*.spec")
@@ -97,6 +110,9 @@ class HerixWorkbenchWindow(QMainWindow):
                                     "There was an error loading the spec file. \n\nException: " + str(ex))
 
     def loadScans(self):
+        """Loads the spec information to specguiutils widgets.
+        :return:
+        """
         self.scanBrowser.loadScans(self.scans)
         scanTypes = self.getScanTypes()
         self.scanTypeSelector.loadScans(scanTypes)
@@ -105,6 +121,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
 
     def getScanTypes(self):
+        """Gets the scan types from the spec file."""
         scanTypes = set()
         for scan in self.scans:
             scanTypes.add(self.specFile.scans[scan].scanCmd.split()[0])
@@ -114,22 +131,21 @@ class HerixWorkbenchWindow(QMainWindow):
         return scanTypes
 
     def filterScansByType(self):
+        """Reloads the ScanBrowser filter by the selected scan type."""
         if self.scanTypeSelector.getCurrentType() == 'All':
-            self.loadAllScans()
+            self.scanBrowser.loadScans(self.scans)
         else:
             self.scanBrowser.filterByScanTypes(self.scans, self.scanTypeSelector.getCurrentType())
-
-    def loadAllScans(self):
-        self.scanBrowser.loadScans(self.scans)
 
     def printSelection(self):
         """This method will be called when a PVvalue is selected or unselected."""
         scans = self.scanBrowser.scanList.selectedIndexes()
         print(scans)
 
-    def plotDetectors(self, detectors):
+    def setSelectedPlotDetectors(self, detectors):
         """Method will be called when a detector is selected or unselected. """
-        print(detectors)
+        self.selectedDetectors = []
+        self.selectedDetectors = detectors
 
 
 def main():

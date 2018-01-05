@@ -27,10 +27,26 @@ class PlotWidget(QWidget):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
-    def SinglePlot(self):
+    def singlePlot(self):
         pass
 
-    def MultiPlot(self):
+    def multiPlot(self, detectors):
+        self.clearPlot()
+        if len(detectors) == 1:
+            self.fig.add_subplot(111)
+        elif len(detectors) == 2:
+           ax1 = self.fig.add_subplot(121)
+           ax2 = self.fig.add_subplot(122)
+        elif len(detectors) == 3:
+            ax1 = self.fig.add_subplot(221)
+            ax2 = self.fig.add_subplot(222)
+            ax2 = self.fig.add_subplot(223)
+        self.canvas.draw()
+        # adding legend
+        # self.axes.legend(loc='bottom center', bbox_to_anchor=(1.45, .08), shadow=True, ncol=1)
         pass
+
+    def clearPlot(self):
+        self.fig.clear()
 
 

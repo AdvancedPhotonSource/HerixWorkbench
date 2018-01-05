@@ -15,6 +15,8 @@ from PyQt5.QtWidgets import *
 from spec2nexus.spec import SpecDataFile
 from specguiutils.scanbrowser import ScanBrowser
 from specguiutils.scantypeselector import ScanTypeSelector, SCAN_TYPES
+from HerixWorkbench.source.DetectorSelector import SelectorContainer
+from HerixWorkbench.source.PlotWidget import PlotWidget
 
 
 
@@ -26,22 +28,31 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setWindowTitle("Herix Workbench")
         self.setMinimumSize(1000, 650)
         self.windowSplitter = QSplitter()
+        self.plotWidget = PlotWidget()
 
         self.CreateSpecDataSplitter()
         self.createMenuBar()
         self.windowSplitter.addWidget(self.specSplitter)
+        self.windowSplitter.addWidget(self.plotWidget)
         self.setCentralWidget(self.windowSplitter)
 
     def CreateSpecDataSplitter(self):
         self.specSplitter = QSplitter()
         self.specSplitter.setOrientation(Qt.Vertical)
-        self.specSplitter.setFixedWidth(300)
+        self.CreatePlotTypeComboBox()
 
         self.scanBrowser = ScanBrowser()
+        self.scanBrowser.setFixedWidth(405)
         self.scanTypeSelector = ScanTypeSelector()
+        self.scanTypeSelector.setFixedWidth(400)
+        self.selectorContainer = SelectorContainer()
+        self.selectorContainer.detectorsSelected.connect(self.plotDetectors)
 
         self.specSplitter.addWidget(self.scanTypeSelector)
         self.specSplitter.addWidget(self.scanBrowser)
+        self.specSplitter.addWidget(self.plotTypeWidget)
+        self.specSplitter.addWidget(self.selectorContainer)
+        self.specSplitter.addWidget(QWidget())
 
     def createMenuBar(self):
         menuBar = self.menuBar()
@@ -58,7 +69,20 @@ class HerixWorkbenchWindow(QMainWindow):
         fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
 
-    @pyqtSlot()
+    def CreatePlotTypeComboBox(self):
+        self.plotTypeWidget = QWidget()
+        self.plotTypeWidget.setFixedWidth(400)
+        hLayout = QHBoxLayout()
+        self.plotTypeCB = QComboBox()
+        self.plotTypeCB.addItem("Single")
+        self.plotTypeCB.addItem("Multi")
+
+        hLayout.addWidget(QLabel("Plot Type: "))
+        hLayout.addWidget(self.plotTypeCB)
+
+        self.plotTypeWidget.setLayout(hLayout)
+
+
     def openSpecFile(self):
         fileName, specFilterName = QFileDialog.getOpenFileName(self, "Open spec file", None, "*.spec")
         self.specFile = None
@@ -77,15 +101,16 @@ class HerixWorkbenchWindow(QMainWindow):
         scanTypes = self.getScanTypes()
         self.scanTypeSelector.loadScans(scanTypes)
         self.scanTypeSelector.scanTypeChanged.connect(self.filterScansByType)
+        self.scanBrowser.scanSelected.connect(self.printSelection)
+        self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
 
     def getScanTypes(self):
         scanTypes = set()
         for scan in self.scans:
             scanTypes.add(self.specFile.scans[scan].scanCmd.split()[0])
+
         scanTypes = list(scanTypes)
-        print(scanTypes)
         scanTypes.sort(key=str.lower)
-        print(scanTypes)
         return scanTypes
 
     def filterScansByType(self):
@@ -96,6 +121,15 @@ class HerixWorkbenchWindow(QMainWindow):
 
     def loadAllScans(self):
         self.scanBrowser.loadScans(self.scans)
+
+    def printSelection(self):
+        """This method will be called when a PVvalue is selected or unselected."""
+        scans = self.scanBrowser.scanList.selectedIndexes()
+        print(scans)
+
+    def plotDetectors(self, detectors):
+        """Method will be called when a detector is selected or unselected. """
+        print(detectors)
 
 
 def main():

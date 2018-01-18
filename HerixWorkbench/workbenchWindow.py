@@ -28,7 +28,8 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setWindowTitle("Herix Workbench")
         self.setMinimumSize(1000, 650)
         self.windowSplitter = QSplitter()
-        self.plotWidget = PlotWidget()
+        self.PlotWidget = PlotWidget()
+        self.plotWidget = self.PlotWidget.plotWidget
         self.selectedDetectors = []
 
         self.CreateSpecDataSplitter()
@@ -38,7 +39,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setCentralWidget(self.windowSplitter)
 
     def CreateSpecDataSplitter(self):
-        """Creates the QSplitter with the spec and detector widgets,"""
+        """Creates the QSplitter with the spec and detector widgets."""
         self.specSplitter = QSplitter()
         self.specSplitter.setOrientation(Qt.Vertical)
         self.createPlotTypeComboBox()
@@ -79,22 +80,12 @@ class HerixWorkbenchWindow(QMainWindow):
         self.plotTypeCB = QComboBox()
         self.plotTypeCB.addItem("Single")
         self.plotTypeCB.addItem("Multi")
-        self.plotTypeCB.currentIndexChanged.connect(self.newPlotType)
+        self.plotTypeCB.currentIndexChanged.connect(self.updatePlot)
 
         hLayout.addWidget(QLabel("Plot Type: "))
         hLayout.addWidget(self.plotTypeCB)
 
         self.plotTypeWidget.setLayout(hLayout)
-
-    def newPlotType(self, int):
-        """This method gets called when the plot type QCombox changes index."""
-        plotType = self.plotTypeCB.currentText()
-        if plotType is "Single":
-            # Need to get the #S info
-            self.plotWidget.singlePlot()
-        else:
-            # Need to get the #S info
-            self.plotWidget.multiPlot(self.selectedDetectors)
 
     def openSpecFile(self):
         fileName, specFilterName = QFileDialog.getOpenFileName(self, "Open spec file", None, "*.spec")
@@ -102,8 +93,8 @@ class HerixWorkbenchWindow(QMainWindow):
 
         if fileName != "":
             try:
-                self.specFile = SpecDataFile(fileName)
-                self.scans = self.specFile.scans
+                self.PlotWidget.loadSpecFile(fileName)
+                self.scans = self.PlotWidget.getScans()
                 self.loadScans()
             except Exception as ex:
                 QMessageBox.warning(self, "Loading error",
@@ -114,21 +105,13 @@ class HerixWorkbenchWindow(QMainWindow):
         :return:
         """
         self.scanBrowser.loadScans(self.scans)
-        scanTypes = self.getScanTypes()
+        scanTypes = self.PlotWidget.getScanTypes()
         self.scanTypeSelector.loadScans(scanTypes)
         self.scanTypeSelector.scanTypeChanged.connect(self.filterScansByType)
-        self.scanBrowser.scanSelected.connect(self.printSelection)
-        self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
-
-    def getScanTypes(self):
-        """Gets the scan types from the spec file."""
-        scanTypes = set()
-        for scan in self.scans:
-            scanTypes.add(self.specFile.scans[scan].scanCmd.split()[0])
-
-        scanTypes = list(scanTypes)
-        scanTypes.sort(key=str.lower)
-        return scanTypes
+        self.scanBrowser.scanSelected.connect(self.PlotWidget.scanSelection)
+        self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
+        # Might need this for later, for multi selection.
+        #self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
 
     def filterScansByType(self):
         """Reloads the ScanBrowser filter by the selected scan type."""
@@ -137,15 +120,21 @@ class HerixWorkbenchWindow(QMainWindow):
         else:
             self.scanBrowser.filterByScanTypes(self.scans, self.scanTypeSelector.getCurrentType())
 
-    def printSelection(self):
-        """This method will be called when a PVvalue is selected or unselected."""
-        scans = self.scanBrowser.scanList.selectedIndexes()
-        print(scans)
-
     def setSelectedPlotDetectors(self, detectors):
         """Method will be called when a detector is selected or unselected. """
         self.selectedDetectors = []
-        self.selectedDetectors = detectors
+        for d in detectors:
+            self.selectedDetectors.append('Ana'+str(d))
+        self.updatePlot()
+
+    def updatePlot(self):
+        """This method gets called when the plot type QCombox changes index."""
+        if self.PlotWidget.specOpen == True:
+            plotType = self.plotTypeCB.currentText()
+            if plotType == "Single":
+                self.PlotWidget.singlePlot(self.selectedDetectors)
+            else:
+                self.PlotWidget.multiPlot(self.selectedDetectors)
 
 
 def main():

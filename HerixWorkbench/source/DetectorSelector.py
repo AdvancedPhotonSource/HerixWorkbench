@@ -24,6 +24,9 @@ class SelectorContainer(QGroupBox):
         self.createDetectorCheckBoxes()
 
     def createDetectorCheckBoxes(self):
+        """Initializes the nine check boxes and adds them to the QGroupBox
+        :return:
+        """
         vBox = QVBoxLayout()
         self.buttonGroup = QButtonGroup(self)
         self.buttonGroup.setExclusive(False)
@@ -37,6 +40,8 @@ class SelectorContainer(QGroupBox):
         self.setLayout(vBox)
 
     def detectorCheckBoxState(self, i):
+        """Emits a signal containing the list of the checked boxes when the state of one check box
+        has changed. """
         checkedDetectors = []
         for i in range(0, 9):
             if self.detectorCheckBoxes[i].checkState() == 2:

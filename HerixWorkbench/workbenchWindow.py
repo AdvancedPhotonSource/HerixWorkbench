@@ -82,6 +82,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.plotTypeCB.addItem("Multi")
         self.plotTypeCB.currentIndexChanged.connect(self.updatePlot)
 
+
         hLayout.addWidget(QLabel("Plot Type: "))
         hLayout.addWidget(self.plotTypeCB)
 
@@ -109,9 +110,9 @@ class HerixWorkbenchWindow(QMainWindow):
         self.scanTypeSelector.loadScans(scanTypes)
         self.scanTypeSelector.scanTypeChanged.connect(self.filterScansByType)
         self.scanBrowser.scanSelected.connect(self.PlotWidget.scanSelection)
+        self.scanBrowser.scanSelected.connect(self.updatePlot)
         self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
-        # Might need this for later, for multi selection.
-        #self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
+
 
     def filterScansByType(self):
         """Reloads the ScanBrowser filter by the selected scan type."""
@@ -129,7 +130,7 @@ class HerixWorkbenchWindow(QMainWindow):
 
     def updatePlot(self):
         """This method gets called when the plot type QCombox changes index."""
-        if self.PlotWidget.specOpen == True:
+        if self.PlotWidget.specOpen == True and self.PlotWidget.scanHasBeenSelected == True:
             plotType = self.plotTypeCB.currentText()
             if plotType == "Single":
                 self.PlotWidget.singlePlot(self.selectedDetectors)

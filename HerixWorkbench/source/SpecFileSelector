@@ -1,0 +1,26 @@
+
+"""
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+"""
+# -------------------------------------------Imports-------------------------------------------------------------------#
+from __future__ import unicode_literals
+
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+# ----------------------------------------End of Imports---------------------------------------------------------------#
+
+class SpecFileSelectionList(QListWidget):
+    """Creates the group box with the detector check boxes."""
+
+    # Signals
+   # detectorsSelected = pyqtSignal(list, name="detectorSelected")
+
+    def __init__(self, parent=None):
+        super(SpecFileSelectionList, self).__init__(parent)
+
+    def addSpecFile(self, file):
+        item = QListWidgetItem()
+        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+        item.setText("Hi")
+        self.addItem(item)

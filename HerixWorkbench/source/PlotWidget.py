@@ -21,7 +21,6 @@ class PlotWidget(SpecData):
         super(PlotWidget, self).__init__()
         self.plotWidget = QWidget()
         self.fig = plt.figure()
-        #self.fig.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         self.canvas = FigureCanvas(self.fig)
         self.defaultPlot()
 
@@ -44,7 +43,7 @@ class PlotWidget(SpecData):
             self.defaultPlot()
         else:
             ax = self.fig.add_subplot(111)
-            ax.set_title(str(self.specShortName()))
+            ax.set_title(str(self.specShortName(self.specFilePath)))
             ax.set_ylabel("Detector Data")
             ax.set_xlabel("Points")
             detectorData = self.getSpecDetectorData(detectors)
@@ -185,12 +184,14 @@ class PlotWidget(SpecData):
         :param detectorData: detector data from spec file
         :return:
         """
-        xx = range(1, len(detectorData)+1)
+        h, k, l = self.getHKL(detector)
+        label = str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
+        xx, xLabel = self.getDetectorXAxis(self.selectedScans[0])
         yy = detectorData
         ax.set_title(str(detector))
-        ax.plot(xx, yy)
+        ax.plot(xx, yy, label=str(label))
         ax.set_ylabel(str(detector))
-        ax.set_xlabel("Points")
+        ax.set_xlabel(xLabel)
 
     def singlePlotUtils(self, ax, detector, detectorData):
         """This method uses the pass axes and data to create the plot.
@@ -201,9 +202,11 @@ class PlotWidget(SpecData):
         """
         h, k, l = self.getHKL(detector)
         label = str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
-        xx = range(1, len(detectorData) + 1)
+        xx, xLabel = self.getDetectorXAxis(self.selectedScans[0])
         yy = detectorData
         ax.plot(xx, yy, label=str(label))
+        ax.set_ylabel(str(detector))
+        ax.set_xlabel(xLabel)
 
 
 

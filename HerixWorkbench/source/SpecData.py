@@ -24,7 +24,7 @@ class SpecData:
         self.scanInfo = {}
 
     def loadSpecFile(self, fileName):
-        self.specFileName = fileName
+        self.specFilePath = fileName
         self.specFile = SpecDataFile(fileName)
         self.specOpen = True
 
@@ -34,8 +34,11 @@ class SpecData:
     def getScanTypes(self):
         """Gets the scan types from the spec file."""
         scanTypes = set()
+        print("SCAN TYPES")
         for scan in self.getScans():
-            scanTypes.add(self.specFile.scans[scan].scanCmd.split()[0])
+            type = self.specFile.scans[scan].scanCmd.split()[0] + " " + self.specFile.scans[scan].scanCmd.split()[1]
+            scanTypes.add(type)
+            print(self.specFile.scans[scan].scanCmd.split())
 
         scanTypes = list(scanTypes)
         scanTypes.sort(key=str.lower)
@@ -44,9 +47,11 @@ class SpecData:
     def scanSelection(self, scans):
         """This method is called when a PVvalue is selected or unselected. It updates
         which scans are selected."""
+        print(self.selectedScans)
         self.selectedScans = scans
-        self.scanHasBeenSelected = True
-        self.getAnaHKLTempDictionary()
+        if len(self.selectedScans) > 0:
+            self.scanHasBeenSelected = True
+            self.getAnaHKLTempDictionary()
 
     def getSpecDetectorData(self, detectors):
         scanData = {}
@@ -60,8 +65,6 @@ class SpecData:
     def getHKL(self, detector):
         try:
             detInfo = self.scanInfo[detector]
-            print(detector)
-            print(self.scanInfo[detector])
             h = detInfo[0]
             k = detInfo[1]
             l = detInfo[2]
@@ -71,8 +74,8 @@ class SpecData:
                                 "\n\nException: " + str(ex))
             return 0,0,0
 
-    def specShortName(self):
-        return os.path.split(self.specFileName)[1]
+    def specShortName(self, filePath):
+        return os.path.split(filePath)[1]
 
     def getAnaHKLTempDictionary(self):
         try:
@@ -82,15 +85,27 @@ class SpecData:
             vLines = splitN[0].splitlines()
 
             self.scanInfo.update({"Temp": vLines[2].split("#V2")[1].strip()})
+
             for i in range(4,13):
                 v = vLines[i].split('#V' + str(i))
                 v = v[1].strip()
                 self.scanInfo.update({"Ana"+str(i-3): v.split()})
-            print(self.scanInfo)
+            #print(self.scanInfo)
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the HKL of the ANA detectors and"
+            QMessageBox.warning(None, "Error", "There was an error retrieving the HKL for the ANA detectors and"
                                                " the temperature from the spec file."
                                                    "\n\n Exception: " + str(ex))
+
+    def getDetectorXAxis(self, scan):
+        try:
+            axis = self.specFile.scans[scan].L[0]
+            x = self.specFile.scans[scan].data[axis]
+            return x, axis
+        except Exception as ex:
+            QMessageBox.warning(None, "Error", "There was an error retrieving the x-axis for scan " + scan + "." +
+                                               "\n\n Exception: " + str(ex))
+            return 0, None
+
 
 
 

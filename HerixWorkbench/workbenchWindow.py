@@ -126,8 +126,10 @@ class HerixWorkbenchWindow(QMainWindow):
         """Reloads the ScanBrowser filter by the selected scan type."""
         if self.scanTypeSelector.getCurrentType() == 'All':
             self.scanBrowser.loadScans(self.scans)
+            self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
         else:
             self.scanBrowser.filterByScanTypes(self.scans, self.scanTypeSelector.getCurrentType())
+            self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
 
     def setSelectedPlotDetectors(self, detectors):
         """Method will be called when a detector is selected or unselected. """
@@ -170,7 +172,7 @@ class HerixWorkbenchWindow(QMainWindow):
 
         self.selectorContainer.detectorsSelected.connect(self.setSelectedPlotDetectors)
         self.scanBrowser.scanList.itemSelectionChanged.connect(self.scanBrowser.scanSelectionChanged)
-        self.updatePlot()
+        self.PlotWidget.clearPlot()
 
 def main():
     """Main method.

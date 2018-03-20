@@ -53,14 +53,12 @@ class SpecData:
             self.scanHasBeenSelected = True
             self.getAnaHKLTempDictionary()
 
-    def getSpecDetectorData(self, detectors):
+    def getSpecDetectorData(self, scan, detector):
         scanData = {}
-        if len(detectors) == 0:
+        if detector == None:
             return scanData
         else:
-            for detector in detectors:
-                scanData.update({detector: self.specFile.scans[str(self.selectedScans[0])].data[detector]})
-            return scanData
+            return self.specFile.scans[str(scan)].data[detector]
 
     def getHKL(self, detector):
         try:

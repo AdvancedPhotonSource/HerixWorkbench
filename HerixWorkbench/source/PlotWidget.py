@@ -46,9 +46,8 @@ class PlotWidget(SpecData):
             ax.set_title(str(self.specShortName(self.specFilePath)))
             ax.set_ylabel("Detector Data")
             ax.set_xlabel("Points")
-            detectorData = self.getSpecDetectorData(detectors)
             for d in detectors:
-                self.singlePlotUtils(ax, d, detectorData[str(d)])
+                self.singlePlotUtils(ax, d)
             ax.legend()
 
             self.canvas.draw()
@@ -56,35 +55,34 @@ class PlotWidget(SpecData):
     def multiPlot(self, detectors):
         try:
             self.clearPlot()
-            detectorData = self.getSpecDetectorData(detectors)
 
             if len(detectors) == 1:
                 ax1 = self.fig.add_subplot(111)
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
+                self.multiPlotUtils(ax1, detectors[0])
             elif len(detectors) == 2:
                ax1 = self.fig.add_subplot(121)
                ax2 = self.fig.add_subplot(122)
 
-               self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-               self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
+               self.multiPlotUtils(ax1, detectors[0])
+               self.multiPlotUtils(ax2, detectors[1])
             elif len(detectors) == 3:
                 ax1 = self.fig.add_subplot(221)
                 ax2 = self.fig.add_subplot(222)
                 ax3 = self.fig.add_subplot(223)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
             elif len(detectors) == 4:
                 ax1 = self.fig.add_subplot(221)
                 ax2 = self.fig.add_subplot(222)
                 ax3 = self.fig.add_subplot(223)
                 ax4 = self.fig.add_subplot(224)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
-                self.multiPlotUtils(ax4, detectors[3], detectorData[str(detectors[3])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
+                self.multiPlotUtils(ax4, detectors[3])
             elif len(detectors) == 5:
                 ax1 = self.fig.add_subplot(231)
                 ax2 = self.fig.add_subplot(232)
@@ -92,11 +90,11 @@ class PlotWidget(SpecData):
                 ax4 = self.fig.add_subplot(234)
                 ax5 = self.fig.add_subplot(235)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
-                self.multiPlotUtils(ax4, detectors[3], detectorData[str(detectors[3])])
-                self.multiPlotUtils(ax5, detectors[4], detectorData[str(detectors[4])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
+                self.multiPlotUtils(ax4, detectors[3])
+                self.multiPlotUtils(ax5, detectors[4])
             elif len(detectors) == 6:
                 ax1 = self.fig.add_subplot(231)
                 ax2 = self.fig.add_subplot(232)
@@ -105,12 +103,12 @@ class PlotWidget(SpecData):
                 ax5 = self.fig.add_subplot(235)
                 ax6 = self.fig.add_subplot(236)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
-                self.multiPlotUtils(ax4, detectors[3], detectorData[str(detectors[3])])
-                self.multiPlotUtils(ax5, detectors[4], detectorData[str(detectors[4])])
-                self.multiPlotUtils(ax6, detectors[5], detectorData[str(detectors[5])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
+                self.multiPlotUtils(ax4, detectors[3])
+                self.multiPlotUtils(ax5, detectors[4])
+                self.multiPlotUtils(ax6, detectors[5])
             elif len(detectors) == 7:
                 ax1 = self.fig.add_subplot(331)
                 ax2 = self.fig.add_subplot(332)
@@ -120,13 +118,13 @@ class PlotWidget(SpecData):
                 ax6 = self.fig.add_subplot(336)
                 ax7 = self.fig.add_subplot(337)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
-                self.multiPlotUtils(ax4, detectors[3], detectorData[str(detectors[3])])
-                self.multiPlotUtils(ax5, detectors[4], detectorData[str(detectors[4])])
-                self.multiPlotUtils(ax6, detectors[5], detectorData[str(detectors[5])])
-                self.multiPlotUtils(ax7, detectors[6], detectorData[str(detectors[6])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
+                self.multiPlotUtils(ax4, detectors[3])
+                self.multiPlotUtils(ax5, detectors[4])
+                self.multiPlotUtils(ax6, detectors[5])
+                self.multiPlotUtils(ax7, detectors[6])
             elif len(detectors) == 8:
                 ax1 = self.fig.add_subplot(331)
                 ax2 = self.fig.add_subplot(332)
@@ -137,14 +135,14 @@ class PlotWidget(SpecData):
                 ax7 = self.fig.add_subplot(337)
                 ax8 = self.fig.add_subplot(338)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
-                self.multiPlotUtils(ax4, detectors[3], detectorData[str(detectors[3])])
-                self.multiPlotUtils(ax5, detectors[4], detectorData[str(detectors[4])])
-                self.multiPlotUtils(ax6, detectors[5], detectorData[str(detectors[5])])
-                self.multiPlotUtils(ax7, detectors[6], detectorData[str(detectors[6])])
-                self.multiPlotUtils(ax8, detectors[7], detectorData[str(detectors[7])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
+                self.multiPlotUtils(ax4, detectors[3])
+                self.multiPlotUtils(ax5, detectors[4])
+                self.multiPlotUtils(ax6, detectors[5])
+                self.multiPlotUtils(ax7, detectors[6])
+                self.multiPlotUtils(ax8, detectors[7])
             elif len(detectors) == 9:
                 ax1 = self.fig.add_subplot(331)
                 ax2 = self.fig.add_subplot(332)
@@ -156,57 +154,66 @@ class PlotWidget(SpecData):
                 ax8 = self.fig.add_subplot(338)
                 ax9 = self.fig.add_subplot(339)
 
-                self.multiPlotUtils(ax1, detectors[0], detectorData[str(detectors[0])])
-                self.multiPlotUtils(ax2, detectors[1], detectorData[str(detectors[1])])
-                self.multiPlotUtils(ax3, detectors[2], detectorData[str(detectors[2])])
-                self.multiPlotUtils(ax4, detectors[3], detectorData[str(detectors[3])])
-                self.multiPlotUtils(ax5, detectors[4], detectorData[str(detectors[4])])
-                self.multiPlotUtils(ax6, detectors[5], detectorData[str(detectors[5])])
-                self.multiPlotUtils(ax7, detectors[6], detectorData[str(detectors[6])])
-                self.multiPlotUtils(ax8, detectors[7], detectorData[str(detectors[7])])
-                self.multiPlotUtils(ax9, detectors[8], detectorData[str(detectors[8])])
+                self.multiPlotUtils(ax1, detectors[0])
+                self.multiPlotUtils(ax2, detectors[1])
+                self.multiPlotUtils(ax3, detectors[2])
+                self.multiPlotUtils(ax4, detectors[3])
+                self.multiPlotUtils(ax5, detectors[4])
+                self.multiPlotUtils(ax6, detectors[5])
+                self.multiPlotUtils(ax7, detectors[6])
+                self.multiPlotUtils(ax8, detectors[7])
+                self.multiPlotUtils(ax9, detectors[8])
             else:
                 self.defaultPlot()
             self.canvas.draw()
             self.fig.tight_layout()
         except Exception as e:
-            QMessageBox.warning("Plot error", "An error occur while plotting the selected data. \n\n"
+            QMessageBox.warning(None, "Plot error", "An error occur while plotting the selected data. \n\n"
                                               "Here's the exception: " + str(e))
 
     def clearPlot(self):
         """Clears the plot"""
         self.fig.clear()
+        self.canvas.draw()
 
-    def multiPlotUtils(self, ax, detector, detectorData):
+    def multiPlotUtils(self, ax, detector):
         """This method uses the pass axes and data to create the plot.
         :param ax: figure axes
         :param detector: detector name
         :param detectorData: detector data from spec file
         :return:
         """
-        h, k, l = self.getHKL(detector)
-        label = str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
-        xx, xLabel = self.getDetectorXAxis(self.selectedScans[0])
-        yy = detectorData
-        ax.set_title(str(detector))
-        ax.plot(xx, yy, label=str(label))
-        ax.set_ylabel(str(detector))
-        ax.set_xlabel(xLabel)
+        if (len(self.selectedScans) > 0):
+            for scan in self.selectedScans:
+                detectorData = self.getSpecDetectorData(scan, detector)
+                h, k, l = self.getHKL(detector)
+                label = str(scan) + ": " + str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
+                xx, xLabel = self.getDetectorXAxis(scan)
+                yy = detectorData
+                ax.set_title(str(detector))
+                ax.plot(xx, yy, label=str(label))
+                ax.set_ylabel(str(detector))
+                ax.set_xlabel(xLabel)
 
-    def singlePlotUtils(self, ax, detector, detectorData):
+    def singlePlotUtils(self, ax, detector):
         """This method uses the pass axes and data to create the plot.
         :param ax: figure axes
         :param detector: detector name
         :param detectorData: detector data from spec file
         :return:
         """
-        h, k, l = self.getHKL(detector)
-        label = str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
-        xx, xLabel = self.getDetectorXAxis(self.selectedScans[0])
-        yy = detectorData
-        ax.plot(xx, yy, label=str(label))
-        ax.set_ylabel(str(detector))
-        ax.set_xlabel(xLabel)
+        if (len(self.selectedScans) > 0):
+            for scan in self.selectedScans:
+                detectorData = self.getSpecDetectorData(scan, detector)
+                h, k, l = self.getHKL(detector)
+                label = str(scan) + ": " + str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
+                xx, xLabel = self.getDetectorXAxis(scan)
+                print(len(xx))
+                yy = detectorData
+
+                ax.plot(xx, yy, label=str(label))
+                ax.set_ylabel(str(detector))
+                ax.set_xlabel(xLabel)
 
 
 

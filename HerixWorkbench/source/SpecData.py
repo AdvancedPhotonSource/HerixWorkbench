@@ -23,12 +23,18 @@ class SpecData:
         self.scanHasBeenSelected = False
         self.scanInfo = {}
 
-    def loadSpecFile(self, fileName):
-        self.specFilePath = fileName
-        self.specFile = SpecDataFile(fileName)
+    def loadSpecFile(self, filePath):
+        """This methods loads the file into spec2nexus
+        :param filePath:
+        """
+        self.specFilePath = filePath
+        self.specFile = SpecDataFile(filePath)
         self.specOpen = True
 
     def getScans(self):
+        """Gets scan from the spec file
+        :return: scans
+        """
         return self.specFile.scans
 
     def getScanTypes(self):
@@ -54,9 +60,8 @@ class SpecData:
             self.getAnaHKLTempDictionary()
 
     def getSpecDetectorData(self, scan, detector):
-        scanData = {}
         if detector == None:
-            return scanData
+            return []
         else:
             return self.specFile.scans[str(scan)].data[detector]
 

@@ -6,7 +6,7 @@ See LICENSE file.
 """
 # -------------------------------------------Imports-------------------------------------------------------------------#
 from __future__ import unicode_literals
-from spec2nexus.spec import SpecDataFile
+from spec2nexus.spec import SpecDataFile, SpecDataFileHeader
 from PyQt5.QtWidgets import *
 import os
 # ----------------------------------------End of Imports---------------------------------------------------------------#
@@ -17,6 +17,7 @@ class SpecData:
 
     def __init__(self):
         self.specFile = None
+        self.specFileHeader = None
         self.selectedScans = []
         self.specOpen = False
         self.specFileName = None
@@ -29,6 +30,7 @@ class SpecData:
         """
         self.specFilePath = filePath
         self.specFile = SpecDataFile(filePath)
+        self.specFileHeader = SpecDataFileHeader(open(filePath))
         self.specOpen = True
 
     def getScans(self):
@@ -58,6 +60,7 @@ class SpecData:
         if len(self.selectedScans) > 0:
             self.scanHasBeenSelected = True
             self.getAnaHKLTempDictionary()
+            self.getAnas_d()
 
     def getSpecDetectorData(self, scan, detector):
         if detector == None:
@@ -81,6 +84,7 @@ class SpecData:
         return os.path.split(filePath)[1]
 
     def getAnaHKLTempDictionary(self):
+        #  I might need to make some changes to take into account the selection of other scans
         try:
             rawData = self.specFile.scans[str(self.selectedScans[0])].raw
             splitH0 = rawData.split('#V0')
@@ -93,7 +97,8 @@ class SpecData:
                 v = vLines[i].split('#V' + str(i))
                 v = v[1].strip()
                 self.scanInfo.update({"Ana"+str(i-3): v.split()})
-            #print(self.scanInfo)
+            self.scanInfo.update({"PIN-C":['0', '0', '0']})
+            print(self.scanInfo)
         except Exception as ex:
             QMessageBox.warning(None, "Error", "There was an error retrieving the HKL for the ANA detectors and"
                                                " the temperature from the spec file."
@@ -108,6 +113,25 @@ class SpecData:
             QMessageBox.warning(None, "Error", "There was an error retrieving the x-axis for scan " + scan + "." +
                                                "\n\n Exception: " + str(ex))
             return 0, None
+
+    def getAnas_d(self):
+        try:
+            print("H")
+            oData = self.specFile.scans[str(self.selectedScans[0])].header.O
+            rawData = self.specFile.scans[str(self.selectedScans[0])]
+
+            print(oData)
+            for i in range(len(oData)):
+                oLine = oData[i]
+                print(oLine)
+                for j in range(len(oLine)):
+                    if oLine[j].find("Anal"):
+                        pass
+                        # create a dictionary that contains the number of the
+
+
+        except Exception as ex:
+            QMessageBox.warning(None, "Error", "There was an error retrieving the anaS_d \n\nError: " + str(ex))
 
 
 

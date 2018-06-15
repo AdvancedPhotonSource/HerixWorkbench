@@ -133,9 +133,7 @@ class HerixWorkbenchWindow(QMainWindow):
 
     def setSelectedPlotDetectors(self, detectors):
         """Method will be called when a detector is selected or unselected. """
-        self.selectedDetectors = []
-        for d in detectors:
-            self.selectedDetectors.append('Ana'+str(d))
+        self.selectedDetectors = detectors
         self.updatePlot()
 
     def updatePlot(self):

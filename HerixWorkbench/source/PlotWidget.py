@@ -143,7 +143,7 @@ class PlotWidget(SpecData):
                 self.multiPlotUtils(ax6, detectors[5])
                 self.multiPlotUtils(ax7, detectors[6])
                 self.multiPlotUtils(ax8, detectors[7])
-            elif len(detectors) == 9:
+            elif len(detectors) >= 9:
                 ax1 = self.fig.add_subplot(331)
                 ax2 = self.fig.add_subplot(332)
                 ax3 = self.fig.add_subplot(333)
@@ -194,6 +194,7 @@ class PlotWidget(SpecData):
                 ax.plot(xx, yy, label=str(label))
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
+                ax.legend()
 
     def singlePlotUtils(self, ax, detector):
         """This method uses the pass axes and data to create the plot.

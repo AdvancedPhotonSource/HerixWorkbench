@@ -42,11 +42,9 @@ class SpecData:
     def getScanTypes(self):
         """Gets the scan types from the spec file."""
         scanTypes = set()
-        print("SCAN TYPES")
         for scan in self.getScans():
             type = self.specFile.scans[scan].scanCmd.split()[0] + " " + self.specFile.scans[scan].scanCmd.split()[1]
             scanTypes.add(type)
-            print(self.specFile.scans[scan].scanCmd.split())
 
         scanTypes = list(scanTypes)
         scanTypes.sort(key=str.lower)
@@ -59,8 +57,7 @@ class SpecData:
         self.selectedScans = scans
         if len(self.selectedScans) > 0:
             self.scanHasBeenSelected = True
-            self.getAnaHKLTempDictionary()
-            self.getAnas_d()
+            self.getDetectorInfoDictionary()
 
     def getSpecDetectorData(self, scan, detector):
         if detector == None:
@@ -83,21 +80,29 @@ class SpecData:
     def specShortName(self, filePath):
         return os.path.split(filePath)[1]
 
-    def getAnaHKLTempDictionary(self):
+    def getDetectorInfoDictionary(self):
+        """This method creates a dictionary with information for each detector in a particular scan.
+        :return:
+        """
         #  I might need to make some changes to take into account the selection of other scans
         try:
-            rawData = self.specFile.scans[str(self.selectedScans[0])].raw
-            splitH0 = rawData.split('#V0')
-            splitN = splitH0[1].split("#N")
-            vLines = splitN[0].splitlines()
+            vData = self.specFile.scans[str(self.selectedScans[0])].V
+            anas_d = self.getAnas_diam()
+            self.scanInfo.update({"Temp": vData[2]})
+            self.scanInfo.update({"PIN-C": [0, 0, 0, 100]})
 
-            self.scanInfo.update({"Temp": vLines[2].split("#V2")[1].strip()})
+            # Gets the hkl for each analyzer, which are located in #V4-#V12
+            for i in range(4, 13):
+                info = vData[i]
+                diam = 100
+                for d in anas_d:
+                    if d == "Anal"+str(i-3):
+                        diam = anas_d[d]
+                info.append(diam)
 
-            for i in range(4,13):
-                v = vLines[i].split('#V' + str(i))
-                v = v[1].strip()
-                self.scanInfo.update({"Ana"+str(i-3): v.split()})
-            self.scanInfo.update({"PIN-C":['0', '0', '0']})
+                self.scanInfo.update({"Ana"+str(i-3): info})
+
+            print(vData)
             print(self.scanInfo)
         except Exception as ex:
             QMessageBox.warning(None, "Error", "There was an error retrieving the HKL for the ANA detectors and"
@@ -114,24 +119,34 @@ class SpecData:
                                                "\n\n Exception: " + str(ex))
             return 0, None
 
-    def getAnas_d(self):
+    def getAnas_diam(self):
+        """This method gets the Ana detectors diam from the spec file. It finds them using the #O from the header,
+        and finding their value under the scan #P.
+        :return: dictionary with detectors and their diam
+        """
         try:
-            print("H")
+            anas_d = {}
+            anas_o = {}
             oData = self.specFile.scans[str(self.selectedScans[0])].header.O
-            rawData = self.specFile.scans[str(self.selectedScans[0])]
+            pData = self.specFile.scans[str(self.selectedScans[0])].P
 
-            print(oData)
             for i in range(len(oData)):
                 oLine = oData[i]
-                print(oLine)
                 for j in range(len(oLine)):
-                    if oLine[j].find("Anal"):
-                        pass
-                        # create a dictionary that contains the number of the
+                    if oLine[j].find("Anal") == 0:
+                        ana = oLine[j].split("_")[0]
+                        anas_o.update({str(ana): [i, j]})
 
+            for o in anas_o:
+                row, col = anas_o[o]
+                pRow = pData[row].split()
+                p = pRow[col]
+                anas_d.update({o : p})
 
+            return anas_d
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the anaS_d \n\nError: " + str(ex))
+            QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
+            return None
 
 
 

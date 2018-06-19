@@ -17,7 +17,7 @@ Version
 Author(s)
 ---------
 Escalante, Phaulo - CO-OP Student Technical at Argonne National Laboratory <br/>
-Hammonds, John - Principal Application Developer at Argonne National Laboratory
+Hammonds, John - Principal Application Developer at Argonne National Laboratory (specguiutils)
 
 License
 -------

@@ -3,6 +3,8 @@
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
+
+This file is used to create an executable of the program.
 """
 import sys
 from cx_Freeze import Executable, setup

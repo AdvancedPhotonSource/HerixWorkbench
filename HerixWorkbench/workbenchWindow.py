@@ -13,7 +13,7 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from spec2nexus.spec import SpecDataFile
-from specguiutils.scanbrowser import ScanBrowser
+from HerixWorkbench.tools.scanbrowser import ScanBrowser
 from specguiutils.scantypeselector import ScanTypeSelector
 from HerixWorkbench.source.DetectorSelector import SelectorContainer
 from HerixWorkbench.source.PlotWidget import PlotWidget

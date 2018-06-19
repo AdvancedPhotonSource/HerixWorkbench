@@ -3,6 +3,8 @@
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
+
+This file is used to upload the code to the pypi repository.
 """
 
 from setuptools import setup

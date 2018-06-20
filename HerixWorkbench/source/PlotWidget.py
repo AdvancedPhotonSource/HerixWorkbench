@@ -31,6 +31,7 @@ class PlotWidget(SpecData):
     def defaultPlot(self):
         axes = self.fig.add_subplot(111)
         axes.plot([1, 2, 3, 4], [1, 2, 3, 4])
+        self.fig.tight_layout(rect=[0 , .04, 1, 1])
         self.canvas.draw()
 
     def singlePlot(self, detectors):
@@ -48,8 +49,9 @@ class PlotWidget(SpecData):
             ax.set_xlabel("Points")
             for d in detectors:
                 self.singlePlotUtils(ax, d)
-            ax.legend()
-
+            ax.legend(loc='upper center', bbox_to_anchor=(.5, -.06),
+                      fancybox=True, shadow=True, ncol=2)
+            self.fig.tight_layout(rect=[0, 0.1, 1, 1])
             self.canvas.draw()
 
     def multiPlot(self, detectors):
@@ -186,28 +188,30 @@ class PlotWidget(SpecData):
         if (len(self.selectedScans) > 0):
             for scan in self.selectedScans:
                 detectorData = self.getSpecDetectorData(scan, detector)
-                h, k, l = self.getHKL(detector)
-                label = str(scan) + ": " + str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
+                h, k, l, diam = self.getPlotLegendInfo(detector)
+                label = (str(scan) + ": " + str(detector) + " -" + " H: " + str(h) + "," + " K: " + str(k) + "," +
+                         " L: " + str(l) + str(l) + " Diam: " + str(diam))
                 xx, xLabel = self.getDetectorXAxis(scan)
                 yy = detectorData
                 ax.set_title(str(detector))
                 ax.plot(xx, yy, label=str(label))
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
-                ax.legend()
+                ax.legend(loc='upper center', bbox_to_anchor=(.5, -.06),
+                          fancybox=True, shadow=True)
 
     def singlePlotUtils(self, ax, detector):
         """This method uses the pass axes and data to create the plot.
         :param ax: figure axes
         :param detector: detector name
-        :param detectorData: detector data from spec file
         :return:
         """
         if (len(self.selectedScans) > 0):
             for scan in self.selectedScans:
                 detectorData = self.getSpecDetectorData(scan, detector)
-                h, k, l = self.getHKL(detector)
-                label = str(scan) + ": " + str(detector) + " -" + " H: " + str(h) + "," + " K: " + k + "," + " L: " + l
+                h, k, l, diam = self.getPlotLegendInfo(detector)
+                label = (str(scan) + ": " + str(detector) + " -" + " H: " + str(h) + "," + " K: " + str(k) + "," +
+                         " L: " + str(l) + " Diam: " + str(diam))
                 xx, xLabel = self.getDetectorXAxis(scan)
                 print(len(xx))
                 yy = detectorData

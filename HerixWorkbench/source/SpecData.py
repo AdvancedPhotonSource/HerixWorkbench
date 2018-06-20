@@ -43,12 +43,23 @@ class SpecData:
         """Gets the scan types from the spec file."""
         scanTypes = set()
         for scan in self.getScans():
-            type = self.specFile.scans[scan].scanCmd.split()[0] + " " + self.specFile.scans[scan].scanCmd.split()[1]
+            if self.isNumber(self.specFile.scans[scan].scanCmd.split()[1]) is True:
+                type = self.specFile.scans[scan].scanCmd.split()[0]
+            else:
+                type = self.specFile.scans[scan].scanCmd.split()[0] + " " + self.specFile.scans[scan].scanCmd.split()[1]
             scanTypes.add(type)
 
         scanTypes = list(scanTypes)
         scanTypes.sort(key=str.lower)
         return scanTypes
+
+    def isNumber(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
 
     def scanSelection(self, scans):
         """This method is called when a PVvalue is selected or unselected. It updates
@@ -65,13 +76,14 @@ class SpecData:
         else:
             return self.specFile.scans[str(scan)].data[detector]
 
-    def getHKL(self, detector):
+    def getPlotLegendInfo(self, detector):
         try:
             detInfo = self.scanInfo[detector]
             h = detInfo[0]
             k = detInfo[1]
             l = detInfo[2]
-            return h, k, l
+            diam = detInfo[3]
+            return h, k, l, diam
         except Exception as ex:
             QMessageBox.warning(None, "HKL error", "There was an error retrieving hkl for detector " + detector + "."
                                 "\n\nException: " + str(ex))

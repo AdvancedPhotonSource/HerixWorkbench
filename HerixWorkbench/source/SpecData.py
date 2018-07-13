@@ -30,7 +30,6 @@ class SpecData:
         """
         self.specFilePath = filePath
         self.specFile = SpecDataFile(filePath)
-        self.specFileHeader = SpecDataFileHeader(open(filePath))
         self.specOpen = True
 
     def getScans(self):
@@ -66,6 +65,7 @@ class SpecData:
         which scans are selected."""
         print(self.selectedScans)
         self.selectedScans = scans
+        print(self.selectedScans)
         if len(self.selectedScans) > 0:
             self.scanHasBeenSelected = True
             self.getDetectorInfoDictionary()

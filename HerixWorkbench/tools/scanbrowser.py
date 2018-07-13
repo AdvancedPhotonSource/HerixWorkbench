@@ -171,6 +171,13 @@ class ScanBrowser(qtWidgets.QWidget):
         logger.debug ("Filtered Scans %s" % filteredScans)
         self.loadScans(filteredScans, newFile = False)
 
+    def isNumber(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
     def getCurrentScan(self):
         '''
         retifmx the currently selected scan

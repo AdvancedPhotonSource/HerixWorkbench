@@ -12,13 +12,12 @@ import sys
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from HerixWorkbench.tools.scanbrowser import ScanBrowser
+from HerixWorkbench.tools.specDataSelector import SpecDataSelector
 from specguiutils.scantypeselector import ScanTypeSelector
 from HerixWorkbench.source.DetectorSelector import SelectorContainer
 from HerixWorkbench.source.PlotWidget import PlotWidget
 from HerixWorkbench.source.SpecFileSelector import SpecFileSelectionList
-
-
+# ---------------------------------------------------------------------------------------------------------------------#
 
 
 class HerixWorkbenchWindow(QMainWindow):
@@ -50,15 +49,15 @@ class HerixWorkbenchWindow(QMainWindow):
 
         self.specFileList = SpecFileSelectionList()
         self.specFileList.specFileChanged.connect(self.newSpecFileSelected)
-        self.specFileList.noSpecFileSelected.connect(self.noSpecFileSelection)
-        self.scanBrowser = ScanBrowser()
+        self.specFileList.noSpecFileSelected.connect(self.noSpecFileSelected)
+        self.specDataSelector = SpecDataSelector()
         self.scanTypeSelector = ScanTypeSelector()
         self.selectorContainer = SelectorContainer()
         self.selectorContainer.detectorsSelected.connect(self.setSelectedPlotDetectors)
 
         self.specSplitter.addWidget(self.specFileList)
         self.specSplitter.addWidget(self.scanTypeSelector)
-        self.specSplitter.addWidget(self.scanBrowser)
+        self.specSplitter.addWidget(self.specDataSelector)
         self.specSplitter.addWidget(self.plotTypeWidget)
         self.specSplitter.addWidget(self.selectorContainer)
         self.specSplitter.addWidget(QWidget())
@@ -99,26 +98,29 @@ class HerixWorkbenchWindow(QMainWindow):
 
         if file != "":
             try:
-                self.specFileList.addSpecFile(file, self.PlotWidget.specShortName(file))
+                self.specFileList.addSpecFile(file)
+                print("File Added")
                 if self.specFileList.specFileList.count() == 1:
-                    self.PlotWidget.loadSpecFile(file)
-                    self.scans = self.PlotWidget.getScans()
-                    self.loadScans()
+                    i = 0
+                    specDataFile = self.specFileList.specFileArray[i]
+                    self.specDataSelector.addScanBrowser(specDataFile.getSpecFileName())
+                    self.loadScans(i)
             except Exception as ex:
                 QMessageBox.warning(self, "Loading error",
                                     "There was an error loading the spec file. \n\nException: " + str(ex))
 
-    def loadScans(self):
+    def loadScans(self, i):
         """Loads the spec information to specguiutils widgets.
         :return:
         """
-        self.scanBrowser.loadScans(self.scans)
-        scanTypes = self.PlotWidget.getScanTypes()
-        self.scanTypeSelector.loadScans(scanTypes)
+        specDataFile = self.specFileList.specFileArray[i]
+        scanBrowser = self.specDataSelector.scanBrowserArray[i]
+        scanBrowser.loadScans(specDataFile.getScans())
+        self.scanTypeSelector.loadScans(specDataFile.getScanTypes())
         self.scanTypeSelector.scanTypeChanged.connect(self.filterScansByType)
-        self.scanBrowser.scanSelected.connect(self.PlotWidget.scanSelection)
-        self.scanBrowser.scanSelected.connect(self.updatePlot)
-        self.scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
+        scanBrowser.scanSelected.connect(self.PlotWidget.scanSelection)
+        scanBrowser.scanSelected.connect(self.updatePlot)
+        scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
 
 
     def filterScansByType(self):
@@ -144,32 +146,23 @@ class HerixWorkbenchWindow(QMainWindow):
             else:
                 self.PlotWidget.multiPlot(self.selectedDetectors)
 
-    def newSpecFileSelected(self, int):
-        self.noSpecFileSelection()
-        self.PlotWidget.loadSpecFile(self.specFileList.specFileArray[int])
-        self.scans = self.PlotWidget.getScans()
-        self.loadScans()
+    def newSpecFileSelected(self, specFiles):
+        print(specFiles)
+        print("hi")
+        #self.PlotWidget.loadSpecFile(self.specFileList.specFileArray[int])
+        #self.scans = self.PlotWidget.getScans()
+        #self.loadScans()
 
-    def noSpecFileSelection(self):
-        print("You've entered no spec file has been selected")
-        self.scanBrowser.scanList.itemSelectionChanged.disconnect(self.scanBrowser.scanSelectionChanged)
-        self.selectorContainer.detectorsSelected.disconnect(self.setSelectedPlotDetectors)
+    def noSpecFileSelected(self):
 
-        self.PlotWidget.scanHasBeenSelected = False
-        self.selectedDetectors = []
-        self.PlotWidget.selectedScans = []
-        self.scanBrowser.scanList.clearSelection()
+        if len(self.specFileList.selectedSpecFile) == 0:
+            print("No Spec file has been selected. ")
+            for button in self.selectorContainer.buttonGroup.buttons():
+                button.setCheckState(False)
 
-        for i in range(0, self.scanBrowser.scanList.rowCount()):
-            print(i)
-            self.scanBrowser.scanList.removeRow(0)
-
-        for button in self.selectorContainer.buttonGroup.buttons():
-            button.setCheckState(False)
-
-        self.selectorContainer.detectorsSelected.connect(self.setSelectedPlotDetectors)
-        self.scanBrowser.scanList.itemSelectionChanged.connect(self.scanBrowser.scanSelectionChanged)
-        self.PlotWidget.clearPlot()
+            self.PlotWidget.clearPlot()
+            self.PlotWidget.defaultPlot()
+            self.specDataSelector.defaultScanBrowser()
 
 def main():
     """Main method.

@@ -1,13 +1,15 @@
+#!/usr/bin/env python
 
 """
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 """
-# -------------------------------------------Imports-------------------------------------------------------------------#
+# -------------------------------------------Imports--------0-----------------------------------------------------------#
 from __future__ import unicode_literals
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from HerixWorkbench.tools.specFile import SpecFile
 # ----------------------------------------End of Imports---------------------------------------------------------------#
 
 class SpecFileSelectionList(QWidget):
@@ -16,7 +18,7 @@ class SpecFileSelectionList(QWidget):
 
     # Signals
     specFileChanged = pyqtSignal(int, name="specFileChanged")
-    noSpecFileSelected = pyqtSignal(name="noSpecFileSelected")
+    noSpecFileSelected = pyqtSignal(int, name="noSpecFileSelected")
 
     def __init__(self, parent=None):
         super(SpecFileSelectionList, self).__init__(parent)
@@ -30,35 +32,28 @@ class SpecFileSelectionList(QWidget):
 
         self.prevSelectedFile = None
         self.specFileArray = []
+        self.selectedSpecFile = []
 
-    def addSpecFile(self, path, fileName):
+    def addSpecFile(self, path):
+        specFile = SpecFile(path)
         item = QListWidgetItem()
         item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
         item.setCheckState(Qt.Unchecked)
-        item.setText(fileName)
-        self.specFileArray.append(path)
+        item.setText(specFile.getSpecFileName())
+        self.specFileArray.append(specFile)
         self.specFileList.addItem(item)
 
         if self.specFileList.count() == 1:
             item.setCheckState(Qt.Checked)
-        else:
-            item.setCheckState(Qt.Unchecked)
 
     def specFileSelected(self, item):
-        print("Spec FIle changed")
-        if self.prevSelectedFile is None:
-            self.prevSelectedFile = item
-        elif self.prevSelectedFile == item:
-            print(item.checkState())
-            if item.checkState() == 2:
-                print("I'm in and checked")
-                self.prevSelectedFile = item
-                self.specFileChanged[int].emit(self.specFileList.row(item))
-            else:
-                print("No spec")
-                self.noSpecFileSelected.emit()
-        else:
-            self.prevSelectedFile.setCheckState(Qt.Unchecked)
-            self.prevSelectedFile = item
+        print("Item has been checked: " + str(self.specFileList.row(item)))
+        if item.checkState() == 2:
             self.specFileChanged[int].emit(self.specFileList.row(item))
+            self.selectedSpecFile.append(self.specFileList.row(item))
+        else:
+            self.noSpecFileSelected[int].emit(self.specFileList.row(item))
+
+
+
 

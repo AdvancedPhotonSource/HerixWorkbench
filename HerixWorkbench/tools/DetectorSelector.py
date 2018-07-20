@@ -106,13 +106,13 @@ class SelectorContainer(QWidget):
         print(self.detectorCheckBoxes[10].checkState())
         if self.detectorCheckBoxes[10].checkState() == 2:
             self.disconnectDetectorCheckBoxState()
-            for i in range(0, 10):
+            for i in range(0, 9):
                 self.detectorCheckBoxes[i].setCheckState(Qt.Checked)
             self.connectDetectorCheckBoxState()
             self.detectorCheckBoxState(1)
         else:
             self.disconnectDetectorCheckBoxState()
-            for i in range(0, 10):
+            for i in range(0, 9):
                 self.detectorCheckBoxes[i].setCheckState(Qt.Unchecked)
 
             self.connectDetectorCheckBoxState()

@@ -4,12 +4,12 @@
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 """
-# -------------------------------------------Imports--------0-----------------------------------------------------------#
+# -------------------------------------------Imports-------------------------------------------------------------------#
 from __future__ import unicode_literals
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from HerixWorkbench.tools.specFile import SpecFile
+from HerixWorkbench.source.specFile import SpecFile
 # ----------------------------------------End of Imports---------------------------------------------------------------#
 
 class SpecFileSelectionList(QWidget):

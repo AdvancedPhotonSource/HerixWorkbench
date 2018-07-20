@@ -48,10 +48,15 @@ class SpecFileSelectionList(QWidget):
 
     def specFileSelected(self, item):
         print("Item has been checked: " + str(self.specFileList.row(item)))
+        print(self.selectedSpecFile)
         if item.checkState() == 2:
-            self.specFileChanged[int].emit(self.specFileList.row(item))
             self.selectedSpecFile.append(self.specFileList.row(item))
+            self.specFileChanged[int].emit(self.specFileList.row(item))
         else:
+            for i in range(len(self.selectedSpecFile)):
+                if self.selectedSpecFile[i] == self.specFileList.row(item):
+                    self.selectedSpecFile.pop(i)
+                    break
             self.noSpecFileSelected[int].emit(self.specFileList.row(item))
 
 

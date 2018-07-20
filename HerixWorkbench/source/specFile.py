@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from spec2nexus.spec import SpecDataFile, SpecDataFileHeader
+from HerixWorkbench.source.scan import Scan
 
 import os
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -20,7 +21,8 @@ class SpecFile(QObject):
         self.specFilePath = specPath
         self.specFile = SpecDataFile(specPath)
         self.scanBrowserIndex = None
-        print(self.specFilePath)
+        self.getAnalyzersHKLPlacements()
+
         self.selectedScans = []
 
     def getSpecFilePath(self):
@@ -74,10 +76,33 @@ class SpecFile(QObject):
             QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
             return None
 
+    def getAnalyzersHKLPlacements(self):
+        try:
+            anas_h = {}
+            hData = self.specFile.scans["1"].header.H
+            print("HData")
+            print(hData)
+
+            for i in range(len(hData)):
+                hLine = hData[i]
+
+                if hLine[0].find("T_Sample") == 0:
+                    anas_h.update({'Temp': i})
+                if hLine[0].find("Anal") == 0:
+                    ana = hLine[0].split("_")[0]
+                    anas_h.update({str(ana): i})
+
+            print(anas_h)
+            return anas_h
+        except Exception as ex:
+            QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
+            return None
+
     def scanSelection(self, scans):
-        self.selectedScans = scans
-        for scan in scans:
-            print(scan)
-        print(self.getSpecFileName())
+        self.selectedScans = []
+        for s in scans:
+            scan = Scan(s, self)
+            print(scan.getScanNumber())
+            self.selectedScans.append(scan)
         print(self.selectedScans)
 

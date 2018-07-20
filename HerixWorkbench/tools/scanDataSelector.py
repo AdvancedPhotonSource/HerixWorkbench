@@ -16,10 +16,10 @@ from HerixWorkbench.tools.scanbrowser import ScanBrowser
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
-class SpecDataSelector(QTabWidget):
+class ScanDataSelector(QTabWidget):
     """Main window class"""
     def __init__(self, parent=None):
-        super(SpecDataSelector, self).__init__(parent)
+        super(ScanDataSelector, self).__init__(parent)
         self.scanBrowserArray = []
         self.defaultScanBrowser()
         self.isDefaultBrowserOn = True

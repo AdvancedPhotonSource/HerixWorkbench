@@ -12,10 +12,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont
 from matplotlib.pylab import plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from HerixWorkbench.source.SpecData import SpecData
 # ----------------------------------------End of Imports---------------------------------------------------------------#
 
-class PlotWidget(SpecData):
+class PlotWidget(QObject):
     """Creates the group box with the detector check boxes."""
 
     def __init__(self):

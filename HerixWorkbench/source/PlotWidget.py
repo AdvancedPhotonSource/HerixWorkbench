@@ -199,7 +199,8 @@ class PlotWidget(QObject):
                 yy = detectorData
                 ax.set_title(str(detector))
                 self.legendList.addLabel(str(label))
-                ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                plotSample = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                print(plotSample[0].get_color())
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
                 ax.legend(loc='upper center', fancybox=True, shadow=True, fontsize="x-small")
@@ -222,6 +223,16 @@ class PlotWidget(QObject):
                 ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
+
+    def counterPlot(self, counters, scans):
+        self.clearPlot()
+        if len(counters) == 0:
+            self.defaultPlot()
+        else:
+            xCounter, yCounter, normalizer = counters
+            print(normalizer.find("PyQt"))
+            if normalizer.find("PyQt") != -1:
+                print("Object")
 
 
 class PlotLegendList(QListWidget):

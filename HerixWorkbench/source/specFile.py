@@ -70,7 +70,6 @@ class SpecFile(QObject):
                         ana = oLine[j].split("_")[0]
                         anas_o.update({str(ana): [i, j]})
 
-            print(anas_o)
             return anas_o
         except Exception as ex:
             QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
@@ -80,8 +79,6 @@ class SpecFile(QObject):
         try:
             anas_h = {}
             hData = self.specFile.scans["1"].header.H
-            print("HData")
-            print(hData)
 
             for i in range(len(hData)):
                 hLine = hData[i]
@@ -92,10 +89,9 @@ class SpecFile(QObject):
                     ana = hLine[0].split("_")[0]
                     anas_h.update({str(ana): i})
 
-            print(anas_h)
             return anas_h
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
+            QMessageBox.warning(None, "Error", "There was an error retrieving the HKL placements. \n\nError: " + str(ex))
             return None
 
     def scanSelection(self, scans):
@@ -104,5 +100,7 @@ class SpecFile(QObject):
             scan = Scan(s, self)
             print(scan.getScanNumber())
             self.selectedScans.append(scan)
-        print(self.selectedScans)
+
+    def getSpecLabels(self):
+        return self.specFile.scans["1"].L
 

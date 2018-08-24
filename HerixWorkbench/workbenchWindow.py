@@ -31,8 +31,10 @@ class HerixWorkbenchWindow(QMainWindow):
         self.plotWidget = self.PlotWidget.plotWidget  # Widget
 
         self.selectedDetectors = []
+        self.selectedCounters = []
         self.selectedScans = []
         self.scans = None
+        self.specDataTab = 0
 
         self.CreateSpecDataSplitter()
         self.createMenuBar()
@@ -55,6 +57,8 @@ class HerixWorkbenchWindow(QMainWindow):
         self.scanTypeSelector.scanTypeChanged.connect(self.filterScansByType)
         self.specDataSelector = SpecDataSelector()
         self.specDataSelector.detectorsSelected.connect(self.setSelectedPlotDetectors)
+        self.specDataSelector.countersSelected.connect(self.setSelectedCounters)
+        self.specDataSelector.tabChanged.connect(self.specDataTabChanged)
 
         self.specSplitter.addWidget(self.specFileList)
         self.specSplitter.addWidget(self.scanTypeSelector)
@@ -100,7 +104,6 @@ class HerixWorkbenchWindow(QMainWindow):
         if file != "":
             try:
                 self.specFileList.addSpecFile(file)
-                print("File Added")
             except Exception as ex:
                 QMessageBox.warning(self, "Loading error",
                                     "There was an error loading the spec file. \n\nException: " + str(ex))
@@ -117,6 +120,10 @@ class HerixWorkbenchWindow(QMainWindow):
         scanBrowser.scanSelected.connect(specDataFile.scanSelection)
         scanBrowser.scanSelected.connect(self.updatePlot)
         scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
+
+        if len(self.specFileList.selectedSpecFile) == 1:
+            scanBrowser.setCurrentScan(0)
+            self.specDataSelector.loadCounters(specDataFile.getSpecLabels())
 
     def updateScanTypeSelector(self):
         if self.scanTypeSelector.getCurrentType() != 'All':
@@ -146,15 +153,24 @@ class HerixWorkbenchWindow(QMainWindow):
         self.selectedDetectors = detectors
         self.updatePlot()
 
+    def setSelectedCounters(self, selectedCounters):
+        self.selectedCounters = selectedCounters
+        self.updatePlot()
+
     def updatePlot(self):
         """This method gets called when the plot type QCombox changes index."""
         self.setSelectedScans()
+        #TODO: Might have to activate this variables later on.
         #if self.PlotWidget.specOpen is True and self.PlotWidget.scanHasBeenSelected is True:
-        plotType = self.plotTypeCB.currentText()
-        if plotType == "Single":
-            self.PlotWidget.singlePlot(self.selectedDetectors, self.selectedScans)
-        else:
-            self.PlotWidget.multiPlot(self.selectedDetectors, self.selectedScans)
+        if self.specDataTab == 0:
+            print("Counter Plot")
+            self.PlotWidget.counterPlot(self.selectedCounters, self.selectedScans)
+        elif self.specDataTab == 1:
+            plotType = self.plotTypeCB.currentText()
+            if plotType == "Single":
+                self.PlotWidget.singlePlot(self.selectedDetectors, self.selectedScans)
+            else:
+                self.PlotWidget.multiPlot(self.selectedDetectors, self.selectedScans)
 
     def newSpecFileSelected(self, i):
         print("Row: ", i)
@@ -165,7 +181,7 @@ class HerixWorkbenchWindow(QMainWindow):
     def noSpecFileSelected(self, i):
         if len(self.specFileList.selectedSpecFile) == 0:
             print("No Spec file has been selected. ")
-            for button in self.selectorContainer.buttonGroup.buttons():
+            for button in self.specDataSelector.selectorContainer.buttonGroup.buttons():
                 button.setCheckState(False)
 
             self.PlotWidget.clearPlot()
@@ -193,11 +209,9 @@ class HerixWorkbenchWindow(QMainWindow):
         for i in self.specFileList.selectedSpecFile:
             specDataFile = self.specFileList.specFileArray[i]
             types = specDataFile.getScanTypes()
-            print(types)
             for type in types:
                 scanTypes.add(type)
 
-        print(scanTypes)
         scanTypes = list(scanTypes)
         scanTypes.sort(key=str.lower)
         return scanTypes
@@ -219,6 +233,9 @@ class HerixWorkbenchWindow(QMainWindow):
         print("Main Window Scans:")
         print(self.selectedScans)
 
+    def specDataTabChanged(self, index):
+        self.specDataTab = index
+        self.updatePlot()
 
 def main():
     """Main method.

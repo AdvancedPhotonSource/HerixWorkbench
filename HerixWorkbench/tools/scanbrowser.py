@@ -5,6 +5,7 @@
 import PyQt5.QtWidgets as qtWidgets
 import PyQt5.QtCore as qtCore
 import PyQt5.QtGui as qtGui
+from PyQt5.Qt import QValidator
 import logging
 from specguiutils import METHOD_ENTER_STR
 logger = logging.getLogger(__name__)
@@ -12,11 +13,13 @@ logger = logging.getLogger(__name__)
 SCAN_COL_WIDTH = 40
 CMD_COL_WIDTH = 240
 NUM_PTS_COL_WIDTH = 40
+SHIFT_COL_WIDTH = 50
 MINIMUM_WIDGET_WIDTH = 420
 SCAN_COL = 0
 CMD_COL = 1
 NUM_PTS_COL = 2
-DEFAULT_COLUMN_NAMES = ['S#', 'Command', 'Points']
+SHIFT_COL = 3
+DEFAULT_COLUMN_NAMES = ['S#', 'Command', 'Points', 'Shift']
 
 class ScanBrowser(qtWidgets.QWidget):
     '''
@@ -54,12 +57,12 @@ class ScanBrowser(qtWidgets.QWidget):
         font = qtGui.QFont("Helvetica", pointSize=10)
         self.scanList.setFont(font)
         self.scanList.setEditTriggers(qtWidgets.QAbstractItemView.NoEditTriggers)
-        #self.scanList.setRowCount(1)
         self.scanList.setColumnCount(len(DEFAULT_COLUMN_NAMES) + len(self.positionersToDisplay))
         self.scanList.setColumnWidth(SCAN_COL, SCAN_COL_WIDTH)
         self.scanList.setColumnWidth(CMD_COL, CMD_COL_WIDTH)
         self.scanList.setColumnWidth(NUM_PTS_COL, NUM_PTS_COL_WIDTH)
-        self.scanList.setHorizontalHeaderLabels(['S#', 'Command', 'Points'])
+        self.scanList.setColumnWidth(SHIFT_COL, SHIFT_COL_WIDTH)
+        self.scanList.setHorizontalHeaderLabels(['S#', 'Command', 'Points', 'Shift'])
         self.scanList.verticalHeader().setVisible(False)
         self.scanList.setSelectionBehavior(qtWidgets.QAbstractItemView.SelectRows)
         self.scanList.setFocusPolicy(qtCore.Qt.NoFocus)
@@ -68,6 +71,7 @@ class ScanBrowser(qtWidgets.QWidget):
         self.setMinimumHeight(250)
         layout.addWidget(self.scanList)
         self.setLayout(layout)
+
         self.show()
 
         self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
@@ -95,6 +99,9 @@ class ScanBrowser(qtWidgets.QWidget):
             self.scanList.setItem(row, CMD_COL, cmdItem)
             nPointsItem = qtWidgets.QTableWidgetItem(str(len(scans[scan].data_lines)))
             self.scanList.setItem(row, NUM_PTS_COL, nPointsItem)
+            shiftItem = qtWidgets.QSpinBox()
+            shiftItem.setEnabled(False)
+            self.scanList.setCellWidget(row, SHIFT_COL, shiftItem)
             row +=1
         self.fillSelectedPositionerData()
         self.fillSelectedUserParamsData()

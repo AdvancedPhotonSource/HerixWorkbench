@@ -46,8 +46,6 @@ class Scan(QObject):
                 p = round(float(p), 2)
                 anas_d.update({o: p})
 
-            print("Anas_D")
-            print(anas_d)
             return anas_d
         except Exception as ex:
             QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
@@ -98,8 +96,6 @@ class Scan(QObject):
                         diam = diamData[d]
                 data.append(diam)
                 self.scanDetectorInfo.update({"Ana" + str(i): data})
-            print("Scan Detector Info: ")
-            print(self.scanDetectorInfo)
         except Exception as ex:
             QMessageBox.warning(None, "Error", "There was an error retrieving the HKL for the ANA detectors and"
                                                " the temperature from the spec file."

@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont
 from matplotlib.pylab import plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
 # ----------------------------------------End of Imports---------------------------------------------------------------#
 
 class PlotWidget(QObject):
@@ -230,9 +231,29 @@ class PlotWidget(QObject):
             self.defaultPlot()
         else:
             xCounter, yCounter, normalizer = counters
-            print(normalizer.find("PyQt"))
-            if normalizer.find("PyQt") != -1:
-                print("Object")
+            ax = self.fig.add_subplot(111)
+            ax.set_ylabel("Detector Data")
+            ax.set_xlabel("Points")
+            self.counterPlotUtils(ax, scans, xCounter, yCounter, normalizer)
+            ax.legend(loc='upper center', fancybox=True, shadow=True, fontsize="x-small")
+            self.fig.tight_layout(rect=[0, 0.1, 1, 1])
+            self.canvas.draw()
+
+    def counterPlotUtils(self, ax, scans, xCounter, yCounter, normalizer):
+        if len(scans) > 0:
+            for scan in scans:
+                xx = scan.getSpecDetectorData(xCounter)
+                yy = scan.getSpecDetectorData(yCounter)
+
+                if normalizer.find("PyQt") == -1:
+                    mon = scan.getSpecDetectorData(normalizer)
+                    yy = np.divide(yy, mon)
+
+                label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                self.legendList.addLabel(str(label))
+                ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                ax.set_ylabel(yCounter)
+                ax.set_xlabel(xCounter)
 
 
 class PlotLegendList(QListWidget):

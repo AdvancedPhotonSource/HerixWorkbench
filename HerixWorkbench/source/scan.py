@@ -27,7 +27,12 @@ class Scan(QObject):
         if detector == None:
             return []
         else:
-            return self.specDataFile.data[detector]
+            try:
+                return self.specDataFile.data[detector]
+            except Exception as ex:
+                QMessageBox.warning(None, "Error", "There was an error retrieving the counter data from the spec file. "
+                                                   " \n\nError: " + str(ex))
+                return 0
 
     def getAnas_diam(self):
         """This method gets the Ana detectors diam from the spec file. It finds them using the #O from the header,

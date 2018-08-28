@@ -40,6 +40,7 @@ class ScanBrowser(qtWidgets.QWidget):
     # Define some signals that this class will provide to users
     scanSelected = qtCore.pyqtSignal(list, name="scanSelected")
     scanLoaded = qtCore.pyqtSignal(bool, name="scanLoaded")
+    shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
 
     def __init__(self, parent=None):
         '''
@@ -49,6 +50,7 @@ class ScanBrowser(qtWidgets.QWidget):
         '''
         super(ScanBrowser, self).__init__(parent)
         layout = qtWidgets.QHBoxLayout()
+        self.specFile = None
         self.positionersToDisplay = []
         self.userParamsToDisplay = []
         self.lastScans = None
@@ -101,6 +103,7 @@ class ScanBrowser(qtWidgets.QWidget):
             self.scanList.setItem(row, NUM_PTS_COL, nPointsItem)
             shiftItem = qtWidgets.QSpinBox()
             shiftItem.setEnabled(False)
+            shiftItem.valueChanged.connect(self.counterValueChanged())
             self.scanList.setCellWidget(row, SHIFT_COL, shiftItem)
             row +=1
         self.fillSelectedPositionerData()
@@ -240,7 +243,16 @@ class ScanBrowser(qtWidgets.QWidget):
         selectedScans = []
         for item in selectedItems:
             if item.column() == 0:
-                scan = str(self.scanList.item(item.row(),0).text())
+                scan = str(self.scanList.item(item.row(), 0).text())
+                shifter = self.scanList.cellWidget(item.row(), 3)
+                shifter.setEnabled(True)
                 selectedScans.append(scan)
         logger.debug("Selected scans %s" % selectedScans)
         self.scanSelected[list].emit(selectedScans)
+
+    def setSpecFile(self, file):
+        self.specFile = file
+
+    def counterValueChanged(self, int):
+        specFile = self.specFile
+        scan()

@@ -43,4 +43,5 @@ class ScanDataSelector(QTabWidget):
 
         scanBrowser = ScanBrowser()
         self.scanBrowserArray.append(scanBrowser)
+        scanBrowser.setSpecFile(str(specFileName))
         self.addTab(scanBrowser, str(specFileName))

@@ -27,7 +27,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setWindowTitle("Herix Workbench")
         self.setMinimumSize(1000, 650)
         self.windowSplitter = QSplitter()
-        self.PlotWidget = PlotWidget()  # Class
+        self.PlotWidget = PlotWidget(self)  # Class
         self.plotWidget = self.PlotWidget.plotWidget  # Widget
 
         self.selectedDetectors = []
@@ -120,6 +120,7 @@ class HerixWorkbenchWindow(QMainWindow):
         scanBrowser.scanSelected.connect(specDataFile.scanSelection)
         scanBrowser.scanSelected.connect(self.updatePlot)
         scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
+        scanBrowser.shifterChanged.connect(self.PlotWidget.shifterChanged)
 
         if len(self.specFileList.selectedSpecFile) == 1:
             scanBrowser.setCurrentScan(0)
@@ -147,6 +148,7 @@ class HerixWorkbenchWindow(QMainWindow):
                 scanBrowser = self.scanDataSelector.scanBrowserArray[indx]
                 scanBrowser.filterByScanTypes(specDataFile.getScans(), self.scanTypeSelector.getCurrentType())
                 scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
+                self.specDataSelector.loadCounters(specDataFile.getSpecLabels())
 
     def setSelectedPlotDetectors(self, detectors):
         """Method will be called when a detector is selected or unselected. """
@@ -230,11 +232,12 @@ class HerixWorkbenchWindow(QMainWindow):
             scans = specDataFile.selectedScans
             for scan in scans:
                 self.selectedScans.append(scan)
-        print("Main Window Scans:")
-        print(self.selectedScans)
 
     def specDataTabChanged(self, index):
         self.specDataTab = index
+        self.PlotWidget.currentTab = index
+        print(index)
+        print("INdex")
         self.updatePlot()
 
 def main():

@@ -18,13 +18,18 @@ import numpy as np
 class PlotWidget(QObject):
     """Creates the group box with the detector check boxes."""
 
-    def __init__(self):
-        super(PlotWidget, self).__init__()
+    def __init__(self, parent=None):
+        super(PlotWidget, self).__init__(parent)
+        self.mainWindow = parent
         self.plotWidget = QWidget()
         self.fig = plt.figure()
         self.canvas = FigureCanvas(self.fig)
-        self.defaultPlot()
         self.legendList = PlotLegendList()
+        self.defaultPlot()
+        self.detectors = []
+        self.scans = []
+        self.counters = []
+        self.currentTab = 0
         splitter = QSplitter()
         splitter.setOrientation(Qt.Vertical)
 
@@ -39,6 +44,7 @@ class PlotWidget(QObject):
         axes.plot([1, 2, 3, 4], [1, 2, 3, 4])
         self.fig.tight_layout(rect=[0 , .04, 1, 1])
         self.canvas.draw()
+        self.legendList.defaultLegend()
 
     def singlePlot(self, detectors, scans):
         """This is the single plot that contains everything getting graphed.
@@ -46,6 +52,9 @@ class PlotWidget(QObject):
         :return:
         """
         self.clearPlot()
+        self.detectors = detectors
+        self.scans = scans
+
         if len(detectors) == 0:
             self.defaultPlot()
         else:
@@ -61,6 +70,8 @@ class PlotWidget(QObject):
     def multiPlot(self, detectors, scans):
         try:
             self.clearPlot()
+            self.detectors = detectors
+            self.scans = scans
             if len(scans) > 0:
                 if len(detectors) == 1:
                     ax1 = self.fig.add_subplot(111)
@@ -193,15 +204,16 @@ class PlotWidget(QObject):
         if (len(scans) > 0):
             for scan in scans:
                 detectorData = scan.getSpecDetectorData(detector)
-                h, k, l, diam = scan.getPlotLegendInfo(detector)
-                label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()) + ": " + str(detector) + " -" +
-                         " H: " + str(h) + ", K: " + str(k) + ", L: " + str(l) + ", Diam: " + str(diam))
+                h, k, l, temp1, temp2, diam = scan.getPlotLegendInfo(detector)
+                title = detector + " " + scan.getSpecFileName()
+
                 xx, xLabel = scan.getDetectorXAxis()
+                if scan.shiftValue is not 0:
+                    xx = np.add(xx, scan.shiftValue)
                 yy = detectorData
                 ax.set_title(str(detector))
-                self.legendList.addLabel(str(label))
-                plotSample = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
-                print(plotSample[0].get_color())
+                plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                self.legendList.addLegend(title, temp1, temp2, h, k, l, diam, plot[0].get_color())
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
                 ax.legend(loc='upper center', fancybox=True, shadow=True, fontsize="x-small")
@@ -215,17 +227,45 @@ class PlotWidget(QObject):
         if len(scans) > 0:
             for scan in scans:
                 detectorData = scan.getSpecDetectorData(detector)
-                h, k, l, diam = scan.getPlotLegendInfo(detector)
-                label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()) + ": " + str(detector) + " -" +
-                         " H: " + str(h) + ", K: " + str(k) + ", L: " + str(l) + ", Diam: " + str(diam))
+                h, k, l, temp1, temp2, diam = scan.getPlotLegendInfo(detector)
+                title = detector + " " + scan.getSpecFileName()
+
                 xx, xLabel = scan.getDetectorXAxis()
+                if scan.shiftValue is not 0:
+                    xx = np.add(xx, scan.shiftValue)
                 yy = detectorData
-                self.legendList.addLabel(str(label))
-                ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                #TODO:Remove this method for one that adds a tab widget
+                plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                self.legendList.addLegend(title, temp1, temp2, h, k, l, diam, plot[0].get_color())
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
 
+    def shifterChanged(self, info):
+        scans = []
+        scan = info[0]
+        value = info[1]
+        specFile = info[2]
+        print(info)
+        for s in self.scans:
+            print(s.scan)
+            if s.getSpecFileName() == specFile and s.scan == scan:
+                s.setShifter(value)
+                scans.append(s)
+            elif s.getSpecFileName() == specFile:
+                scans.append(s)
+        print(scans)
+        if self.currentTab == 0:
+            self.counterPlot(self.counters, scans)
+        else:
+            plotType = self.mainWindow.plotTypeCB.currentText()
+            if plotType == "Single":
+                self.singlePlot(self.detectors, scans)
+            else:
+                self.multiPlot(self.detectors, scans)
+
     def counterPlot(self, counters, scans):
+        self.counters = counters
+        self.scans = scans
         self.clearPlot()
         if len(counters) == 0:
             self.defaultPlot()
@@ -242,6 +282,8 @@ class PlotWidget(QObject):
     def counterPlotUtils(self, ax, scans, xCounter, yCounter, normalizer):
         if len(scans) > 0:
             for scan in scans:
+                print('Scan: ' + str(scan.scan))
+                print(scan.shiftValue)
                 xx = scan.getSpecDetectorData(xCounter)
                 yy = scan.getSpecDetectorData(yCounter)
 
@@ -249,28 +291,108 @@ class PlotWidget(QObject):
                     mon = scan.getSpecDetectorData(normalizer)
                     yy = np.divide(yy, mon)
 
+                if scan.shiftValue is not 0:
+                    xx = np.add(xx, scan.shiftValue)
+
                 label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
-                self.legendList.addLabel(str(label))
+                #self.legendList.addLabel(str(label))
                 ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
                 ax.set_ylabel(yCounter)
                 ax.set_xlabel(xCounter)
 
-
-class PlotLegendList(QListWidget):
+class PlotLegendList(QTabWidget):
     """It uses a QListWidget to display the legend information."""
 
     def __init__(self):
         super(PlotLegendList, self).__init__()
         self.setMaximumHeight(300)
         self.setFixedHeight(100)
-        self.setFont(QFont("Helvetica", 12, QFont.Bold))
+        #self.setFont(QFont("Helvetica", 12, QFont.Bold))
+        self.defaultLegend()
 
-    def addLabel(self, label):
-        self.addItem(label)
+    def addLegend(self, title, temp1, temp2, h, k, l, diam, color):
+        legend = PlotLegend()
+        legend.setValuesOnLegend(temp1, temp2, h, k, l, diam)
+        self.addTab(legend, title)
+
+    def defaultLegend(self):
+        self.clearLegend()
+        legend = PlotLegend()
+        self.addTab(legend, "Default")
 
     def clearLegend(self):
-        self.clear()
+        if self.count() > 0:
+            for i in range(self.count()):
+                self.removeTab(0)
+
+class PlotLegend(QWidget):
+
+    def __init__(self, parent=None):
+        super(PlotLegend, self).__init__(parent)
+        self.initializeComponentes()
+
+    def initializeComponentes(self):
+        self.vLayout = QVBoxLayout()
+        self.hLayout1 = QHBoxLayout()
+        self.hLayout2 = QHBoxLayout()
+
+        self.tempLbl = QLabel("Temp:")
+        self.temp1 = QLineEdit()
+        self.temp1.setReadOnly(True)
+        self.temp2 = QLineEdit()
+        self.temp2.setReadOnly(True)
+        self.hLbl = QLabel("H:")
+        self.H = QLineEdit()
+        self.H.setReadOnly(True)
+        self.kLbl = QLabel("K:")
+        self.K = QLineEdit()
+        self.K.setReadOnly(True)
+        self.lLbl = QLabel("L:")
+        self.L = QLineEdit()
+        self.L.setReadOnly(True)
+        self.diamLbl = QLabel("Diam:")
+        self.diam = QLineEdit()
+        self.diam.setReadOnly(True)
+        self.peakLbl = QLabel("Peak:")
+        self.peak = QLineEdit()
+        self.peak.setReadOnly(True)
+        self.positionLbl = QLabel("Position:")
+        self.position = QLineEdit()
+        self.position.setReadOnly(True)
+        self.widthLbl = QLabel("Width:")
+        self.width = QLineEdit()
+        self.width.setReadOnly(True)
 
 
+        self.hLayout1.addWidget(self.tempLbl)
+        self.hLayout1.addWidget(self.temp1)
+        self.hLayout1.addWidget(self.temp2)
+        self.hLayout1.addWidget(self.hLbl)
+        self.hLayout1.addWidget(self.H)
+        self.hLayout1.addWidget(self.kLbl)
+        self.hLayout1.addWidget(self.K)
+        self.hLayout1.addWidget(self.lLbl)
+        self.hLayout1.addWidget(self.L)
+
+        self.hLayout2.addWidget(self.diamLbl)
+        self.hLayout2.addWidget(self.diam)
+        self.hLayout2.addWidget(self.peakLbl)
+        self.hLayout2.addWidget(self.peak)
+        self.hLayout2.addWidget(self.positionLbl)
+        self.hLayout2.addWidget(self.position)
+        self.hLayout2.addWidget(self.widthLbl)
+        self.hLayout2.addWidget(self.width)
+
+        self.vLayout.addLayout(self.hLayout1)
+        self.vLayout.addLayout(self.hLayout2)
+        self.setLayout(self.vLayout)
+
+    def setValuesOnLegend(self, temp1, temp2, h, k, l, diam):
+        self.temp1.setText(str(temp1))
+        self.temp2.setText(str(temp2))
+        self.H.setText(str(h))
+        self.K.setText(str(k))
+        self.L.setText(str(l))
+        self.diam.setText(str(diam))
 
 

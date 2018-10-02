@@ -19,10 +19,10 @@ class Scan(QObject):
         super(Scan, self).__init__(parent=None)
         self.scan = scan
         self.specFile = specFile
+        self.shiftValue = 0
         self.specDataFile = self.specFile.specFile.scans[self.scan]
         self.scanDetectorInfo = {}
         self.createDetectorInfoDictionary()
-
     def getSpecDetectorData(self, detector):
         if detector == None:
             return []
@@ -72,9 +72,6 @@ class Scan(QObject):
                 for i in range(len(data)):
                     data[i] = float(round(float(data[i]), 3))
                 scanInfo.update({h: data})
-
-            print("Spec Info")
-            print(scanInfo)
             return scanInfo
         except Exception as ex:
             QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
@@ -90,12 +87,15 @@ class Scan(QObject):
             data = []
             diam = 0
 
-            self.scanDetectorInfo.update({"Temp": tempHKLInfo["Temp"]})
-            self.scanDetectorInfo.update({"PIN-C": [0, 0, 0, 100]})
+            temp1, temp2 = tempHKLInfo["Temp"]
+            #TODO: This counter, PIN-C, does not have the following information h,k,l (He should not have a legend)
+            self.scanDetectorInfo.update({"PIN-C": [0, 0, 0, 100, temp1, temp2]})
 
             for i in range(1, 10):
                 data = tempHKLInfo["Analyzer" + str(i)]
                 diam = 100
+                data.append(temp1)
+                data.append(temp2)
                 for d in diamData:
                     if d == "Anal" + str(i):
                         diam = diamData[d]
@@ -125,12 +125,19 @@ class Scan(QObject):
     def getPlotLegendInfo(self, detector):
         try:
             detInfo = self.scanDetectorInfo[detector]
+            print(detInfo)
+            print('DetInfo:')
             h = detInfo[0]
             k = detInfo[1]
             l = detInfo[2]
-            diam = detInfo[3]
-            return h, k, l, diam
+            temp1 = detInfo[3]
+            temp2 = detInfo[4]
+            diam = detInfo[5]
+            return h, k, l, temp1, temp2, diam
         except Exception as ex:
             QMessageBox.warning(None, "HKL error", "There was an error retrieving hkl for detector " + detector +
                                 ". \n\nException: " + str(ex))
             return 0, 0, 0
+
+    def setShifter(self, value):
+        self.shiftValue = value

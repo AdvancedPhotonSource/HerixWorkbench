@@ -1,7 +1,7 @@
-'''
+"""
  Copyright (c) 2017, UChicago Argonne, LLC
  See LICENSE file.
-'''
+"""
 import PyQt5.QtWidgets as qtWidgets
 import PyQt5.QtCore as qtCore
 import PyQt5.QtGui as qtGui
@@ -22,7 +22,7 @@ SHIFT_COL = 3
 DEFAULT_COLUMN_NAMES = ['S#', 'Command', 'Points', 'Shift']
 
 class ScanBrowser(qtWidgets.QWidget):
-    '''
+    """
     This class provides information about scans in a spec file.  By default,
     scan number, the scan command and number of points each in a column in the
     table.  This class can be combined with other classes such as the
@@ -36,18 +36,18 @@ class ScanBrowser(qtWidgets.QWidget):
     column to the table for each positioner listed in the scan.  The list of
     positioners is given in the #P fields in the file header and the values
     to display are from the corresponding #O values in the scan header.
-    '''
+    """
     # Define some signals that this class will provide to users
     scanSelected = qtCore.pyqtSignal(list, name="scanSelected")
     scanLoaded = qtCore.pyqtSignal(bool, name="scanLoaded")
     shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
 
     def __init__(self, parent=None):
-        '''
+        """
         Construct an empty table with columns for scan number, scan command and
         number of points.  Data is added to the table via the :py:func:loadScans
         command
-        '''
+        """
         super(ScanBrowser, self).__init__(parent)
         layout = qtWidgets.QHBoxLayout()
         self.specFile = None
@@ -79,18 +79,18 @@ class ScanBrowser(qtWidgets.QWidget):
         self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
 
     def loadScans(self, scans, newFile=True):
-        '''
+        """
         loads the list of scans into the browser. At the end, it will
         pass emit a message that the scan is loaded and from the input
         newFile, it will pass along whether or not this is a new file.
         This is helpful when the scan is reloaded with just a single
         type of scan.  This causes recognition that this is not an
         overall change of file, just changing to a subset of the list.
-        '''
+        """
         logger.debug(METHOD_ENTER_STR)
         self.lastScans = scans
         self.scanList.itemSelectionChanged.disconnect(self.scanSelectionChanged)
-        self.scanList.setRowCount(len(scans.keys()) )
+        self.scanList.setRowCount(len(scans.keys()))
         scanKeys = sorted(scans, key=int)
         logger.debug("scanKeys %s" % str(scanKeys))
         row = 0
@@ -101,22 +101,25 @@ class ScanBrowser(qtWidgets.QWidget):
             self.scanList.setItem(row, CMD_COL, cmdItem)
             nPointsItem = qtWidgets.QTableWidgetItem(str(len(scans[scan].data_lines)))
             self.scanList.setItem(row, NUM_PTS_COL, nPointsItem)
-            shiftItem = qtWidgets.QSpinBox()
+            shiftItem = LineShifter()
+            shiftItem.setScanNum(scan)
             shiftItem.setEnabled(False)
-            shiftItem.valueChanged.connect(self.counterValueChanged())
+            shiftItem.setMaximum(100)
+            shiftItem.setMinimum(-100)
+            shiftItem.shifterChanged.connect(self.shifterValueChanged)
             self.scanList.setCellWidget(row, SHIFT_COL, shiftItem)
-            row +=1
+            row += 1
         self.fillSelectedPositionerData()
         self.fillSelectedUserParamsData()
         self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
         self.scanLoaded.emit(newFile)
 
     def fillSelectedPositionerData(self):
-        '''
+        """
         If positioners have been selected to supplement the table, then
         this cause will grab the values out for each scan and places it
         in a column of the table
-        '''
+        """
         if self.lastScans is None:
             return
         scanKeys = sorted(self.lastScans, key=int)
@@ -131,11 +134,11 @@ class ScanBrowser(qtWidgets.QWidget):
                 row += 1
 
     def fillSelectedUserParamsData(self):
-        '''
+        """
         If user parameters have been selected to supplement the table,
         then this cause will grab the values out for each scan and
         places it in a column of the table
-        '''
+        """
         if self.lastScans is None:
             return
         scanKeys = sorted(self.lastScans, key=int)
@@ -160,10 +163,10 @@ class ScanBrowser(qtWidgets.QWidget):
                 row += 1
 
     def filterByScanTypes(self, scans, scanTypes):
-        '''
+        """
         selects scans fron the list that have a given scan Type and
         causes these to be loaded into the scan table.
-        '''
+        """
         filteredScans = {}
         scanKeys = sorted(scans, key=int)
         if scanTypes is None:
@@ -179,7 +182,7 @@ class ScanBrowser(qtWidgets.QWidget):
             else:
                 filteredScans[scan] = scans[scan]
         logger.debug ("Filtered Scans %s" % filteredScans)
-        self.loadScans(filteredScans, newFile = False)
+        self.loadScans(filteredScans, newFile=False)
 
     def isNumber(self, value):
         try:
@@ -189,23 +192,23 @@ class ScanBrowser(qtWidgets.QWidget):
             return False
 
     def getCurrentScan(self):
-        '''
+        """
         retifmx the currently selected scan
-        '''
+        """
         return str(self.scanList.item(self.scanList.currentRow(), 0).text())
 
     def setCurrentScan(self, row):
-        '''
+        """
         Sets the current scan selection
-        '''
+        """
         logger.debug(METHOD_ENTER_STR)
         self.scanList.setCurrentCell(row, 0)
 
     def setPositionersToDisplay(self, positioners):
-        '''
+        """
         Sets a list of positiorers that will be added to the table
         whenever new data is loaded
-        '''
+        """
         self.positionersToDisplay = positioners
         self.scanList.setColumnCount(len(DEFAULT_COLUMN_NAMES) + \
                                      len(self.positionersToDisplay) + \
@@ -217,10 +220,9 @@ class ScanBrowser(qtWidgets.QWidget):
         self.fillSelectedUserParamsData()
 
     def setUserParamsToDisplay(self, userParams):
-        '''
-        Sets a list of positiorers that will be added to the table
+        """Sets a list of positiorers that will be added to the table
         whenever new data is loaded
-        '''
+        """
         self.userParamsToDisplay = userParams
         self.scanList.setColumnCount(len(DEFAULT_COLUMN_NAMES) + \
                                      len(self.positionersToDisplay) + \
@@ -233,10 +235,8 @@ class ScanBrowser(qtWidgets.QWidget):
 
     @qtCore.pyqtSlot()
     def scanSelectionChanged(self):
-        '''
-        This method runs when a scans are selected.  A signal is emitted
-        with the
-        '''
+        """This method runs when a scans are selected.
+        """
         logger.debug(METHOD_ENTER_STR)
         selectedItems = self.scanList.selectedIndexes()
         logger.debug("SelectedItems %s" % selectedItems)
@@ -253,6 +253,24 @@ class ScanBrowser(qtWidgets.QWidget):
     def setSpecFile(self, file):
         self.specFile = file
 
-    def counterValueChanged(self, int):
-        specFile = self.specFile
-        scan()
+    @qtCore.pyqtSlot(list)
+    def shifterValueChanged(self, infoList):
+        infoList.append(self.specFile)
+        self.shifterChanged[list].emit(infoList)
+
+
+class LineShifter(qtWidgets.QSpinBox):
+    """This class creates a QSpinBox widget that will raise an event to shift the function graphed in PlotWidget."""
+    shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
+
+    def __init__(self):
+        super(LineShifter, self).__init__(parent=None)
+        self.row = ""
+        self.valueChanged.connect(self.shiftValue)
+
+    def setScanNum(self, val):
+        self.row = val
+
+    def shiftValue(self, val):
+        info = list([self.row, val])
+        self.shifterChanged[list].emit(info)

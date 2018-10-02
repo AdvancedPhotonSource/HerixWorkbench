@@ -25,9 +25,6 @@ class ScanDataSelector(QTabWidget):
         self.isDefaultBrowserOn = True
 
     def defaultScanBrowser(self):
-        print(" Default Browser: ")
-        print(self.count())
-        print(self.scanBrowserArray)
         if self.count() > 0:
             for i in range(self.count()):
                 self.removeTab(0)

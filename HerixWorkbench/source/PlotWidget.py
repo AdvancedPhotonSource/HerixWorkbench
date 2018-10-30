@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QFont
 from matplotlib.pylab import plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5 import NavigationToolbar2QT as NavigationToolbar
 import numpy as np
 # ----------------------------------------End of Imports---------------------------------------------------------------#
 
@@ -24,6 +25,7 @@ class PlotWidget(QObject):
         self.plotWidget = QWidget()
         self.fig = plt.figure()
         self.canvas = FigureCanvas(self.fig)
+        self.graphNavigationBar = NavigationToolbar(self.canvas, parent)
         self.legendList = PlotLegendList()
         self.defaultPlot()
         self.detectors = []
@@ -34,6 +36,8 @@ class PlotWidget(QObject):
         splitter.setOrientation(Qt.Vertical)
 
         layout = QVBoxLayout()
+
+        splitter.addWidget(self.graphNavigationBar)
         splitter.addWidget(self.canvas)
         splitter.addWidget(self.legendList)
         layout.addWidget(splitter)
@@ -201,7 +205,7 @@ class PlotWidget(QObject):
         :param detectorData: detector data from spec file
         :return:
         """
-        if (len(scans) > 0):
+        if len(scans) > 0:
             for scan in scans:
                 detectorData = scan.getSpecDetectorData(detector)
                 h, k, l, temp1, temp2, diam = scan.getPlotLegendInfo(detector)
@@ -211,9 +215,15 @@ class PlotWidget(QObject):
                 if scan.shiftValue is not 0:
                     xx = np.add(xx, scan.shiftValue)
                 yy = detectorData
+                maximum = max(yy)
+                maxIndx = yy.index(maximum)
+                maxPos = xx[maxIndx]
+                scan.maxPos = maxPos
+                scan.max = maximum
+
                 ax.set_title(str(detector))
                 plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
-                self.legendList.addLegend(title, temp1, temp2, h, k, l, diam, plot[0].get_color())
+                self.legendList.addLegend(title, temp1, temp2, h, k, l, diam, plot[0].get_color(), maximum, maxPos)
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
                 ax.legend(loc='upper center', fancybox=True, shadow=True, fontsize="x-small")
@@ -234,9 +244,15 @@ class PlotWidget(QObject):
                 if scan.shiftValue is not 0:
                     xx = np.add(xx, scan.shiftValue)
                 yy = detectorData
+                maximum = max(yy)
+                maxIndx = yy.index(maximum)
+                maxPos = xx[maxIndx]
+                scan.maxPos = maxPos
+                scan.max = maximum
+
                 #TODO:Remove this method for one that adds a tab widget
                 plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
-                self.legendList.addLegend(title, temp1, temp2, h, k, l, diam, plot[0].get_color())
+                self.legendList.addLegend(title, temp1, temp2, h, k, l, diam, plot[0].get_color(), maximum, maxPos)
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
 
@@ -287,6 +303,12 @@ class PlotWidget(QObject):
                 xx = scan.getSpecDetectorData(xCounter)
                 yy = scan.getSpecDetectorData(yCounter)
 
+                maximum = max(yy)
+                maxIndx = yy.index(maximum)
+                maxPos = xx[maxIndx]
+                scan.maxPos = maxPos
+                scan.max = maximum
+
                 if normalizer.find("PyQt") == -1:
                     mon = scan.getSpecDetectorData(normalizer)
                     yy = np.divide(yy, mon)
@@ -296,7 +318,8 @@ class PlotWidget(QObject):
 
                 label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
                 #self.legendList.addLabel(str(label))
-                ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                self.legendList.addLegend(label, 0, 0, 0, 0, 0, 0, plot[0].get_color(), maximum, maxPos)
                 ax.set_ylabel(yCounter)
                 ax.set_xlabel(xCounter)
 
@@ -310,9 +333,9 @@ class PlotLegendList(QTabWidget):
         #self.setFont(QFont("Helvetica", 12, QFont.Bold))
         self.defaultLegend()
 
-    def addLegend(self, title, temp1, temp2, h, k, l, diam, color):
+    def addLegend(self, title, temp1, temp2, h, k, l, diam, color, maximum, maxPos):
         legend = PlotLegend()
-        legend.setValuesOnLegend(temp1, temp2, h, k, l, diam)
+        legend.setValuesOnLegend(temp1, temp2, h, k, l, diam, maximum, maxPos)
         self.addTab(legend, title)
 
     def defaultLegend(self):
@@ -354,8 +377,8 @@ class PlotLegend(QWidget):
         self.diam = QLineEdit()
         self.diam.setReadOnly(True)
         self.peakLbl = QLabel("Peak:")
-        self.peak = QLineEdit()
-        self.peak.setReadOnly(True)
+        self.peakMax = QLineEdit()
+        self.peakMax.setReadOnly(True)
         self.positionLbl = QLabel("Position:")
         self.position = QLineEdit()
         self.position.setReadOnly(True)
@@ -377,7 +400,7 @@ class PlotLegend(QWidget):
         self.hLayout2.addWidget(self.diamLbl)
         self.hLayout2.addWidget(self.diam)
         self.hLayout2.addWidget(self.peakLbl)
-        self.hLayout2.addWidget(self.peak)
+        self.hLayout2.addWidget(self.peakMax)
         self.hLayout2.addWidget(self.positionLbl)
         self.hLayout2.addWidget(self.position)
         self.hLayout2.addWidget(self.widthLbl)
@@ -387,12 +410,17 @@ class PlotLegend(QWidget):
         self.vLayout.addLayout(self.hLayout2)
         self.setLayout(self.vLayout)
 
-    def setValuesOnLegend(self, temp1, temp2, h, k, l, diam):
+    def initializeCounterComponents(self):
+        pass
+
+    def setValuesOnLegend(self, temp1, temp2, h, k, l, diam, maximum, maxPos):
         self.temp1.setText(str(temp1))
         self.temp2.setText(str(temp2))
         self.H.setText(str(h))
         self.K.setText(str(k))
         self.L.setText(str(l))
         self.diam.setText(str(diam))
+        self.peakMax.setText(str(maximum))
+        self.position.setText(str(maxPos))
 
 

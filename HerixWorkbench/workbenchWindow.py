@@ -45,7 +45,7 @@ class HerixWorkbenchWindow(QMainWindow):
     def CreateSpecDataSplitter(self):
         """Creates the QSplitter with the spec and detector widgets."""
         self.specSplitter = QSplitter()
-        self.specSplitter.setFixedWidth(400)
+        self.specSplitter.setFixedWidth(480)
         self.specSplitter.setOrientation(Qt.Vertical)
         self.createPlotTypeComboBox()
 
@@ -230,6 +230,8 @@ class HerixWorkbenchWindow(QMainWindow):
         for i in self.specFileList.selectedSpecFile:
             specDataFile = self.specFileList.specFileArray[i]
             scans = specDataFile.selectedScans
+            print("Counter")
+            print(i)
             for scan in scans:
                 self.selectedScans.append(scan)
 

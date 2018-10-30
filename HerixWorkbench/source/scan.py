@@ -20,9 +20,13 @@ class Scan(QObject):
         self.scan = scan
         self.specFile = specFile
         self.shiftValue = 0
+        self.max = 0
+        self.maxPos = 0
+        self.width = 0
         self.specDataFile = self.specFile.specFile.scans[self.scan]
         self.scanDetectorInfo = {}
         self.createDetectorInfoDictionary()
+
     def getSpecDetectorData(self, detector):
         if detector == None:
             return []
@@ -125,8 +129,8 @@ class Scan(QObject):
     def getPlotLegendInfo(self, detector):
         try:
             detInfo = self.scanDetectorInfo[detector]
-            print(detInfo)
             print('DetInfo:')
+            print(detInfo)
             h = detInfo[0]
             k = detInfo[1]
             l = detInfo[2]

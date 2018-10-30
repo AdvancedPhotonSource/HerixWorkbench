@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 SCAN_COL_WIDTH = 40
 CMD_COL_WIDTH = 240
-NUM_PTS_COL_WIDTH = 40
-SHIFT_COL_WIDTH = 50
+NUM_PTS_COL_WIDTH = 65
+SHIFT_COL_WIDTH = 85
 MINIMUM_WIDGET_WIDTH = 420
 SCAN_COL = 0
 CMD_COL = 1
@@ -103,9 +103,6 @@ class ScanBrowser(qtWidgets.QWidget):
             self.scanList.setItem(row, NUM_PTS_COL, nPointsItem)
             shiftItem = LineShifter()
             shiftItem.setScanNum(scan)
-            shiftItem.setEnabled(False)
-            shiftItem.setMaximum(100)
-            shiftItem.setMinimum(-100)
             shiftItem.shifterChanged.connect(self.shifterValueChanged)
             self.scanList.setCellWidget(row, SHIFT_COL, shiftItem)
             row += 1
@@ -259,14 +256,19 @@ class ScanBrowser(qtWidgets.QWidget):
         self.shifterChanged[list].emit(infoList)
 
 
-class LineShifter(qtWidgets.QSpinBox):
+class LineShifter(qtWidgets.QDoubleSpinBox):
     """This class creates a QSpinBox widget that will raise an event to shift the function graphed in PlotWidget."""
     shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
 
     def __init__(self):
         super(LineShifter, self).__init__(parent=None)
+        self.setDecimals(3)
         self.row = ""
+        self.setEnabled(False)
+        self.setMaximum(100)
+        self.setMinimum(-100)
         self.valueChanged.connect(self.shiftValue)
+        self.setSingleStep(.1)
 
     def setScanNum(self, val):
         self.row = val

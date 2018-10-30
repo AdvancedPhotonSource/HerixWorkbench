@@ -102,5 +102,5 @@ class SpecFile(QObject):
             self.selectedScans.append(scan)
 
     def getSpecLabels(self):
-        return self.specFile.scans["1"].L
+        return self.specFile.scans[str(self.selectedScans[0].scan)].L
 

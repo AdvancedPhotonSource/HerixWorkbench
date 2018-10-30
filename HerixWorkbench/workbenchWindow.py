@@ -118,7 +118,7 @@ class HerixWorkbenchWindow(QMainWindow):
         scanBrowser.loadScans(specDataFile.getScans())
         self.updateScanTypeSelector()
         scanBrowser.scanSelected.connect(specDataFile.scanSelection)
-        scanBrowser.scanSelected.connect(self.updatePlot)
+        scanBrowser.scanSelected.connect(self.setSelectedScans)
         scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
         scanBrowser.shifterChanged.connect(self.PlotWidget.shifterChanged)
 
@@ -161,7 +161,6 @@ class HerixWorkbenchWindow(QMainWindow):
 
     def updatePlot(self):
         """This method gets called when the plot type QCombox changes index."""
-        self.setSelectedScans()
         #TODO: Might have to activate this variables later on.
         #if self.PlotWidget.specOpen is True and self.PlotWidget.scanHasBeenSelected is True:
         if self.specDataTab == 0:
@@ -227,13 +226,17 @@ class HerixWorkbenchWindow(QMainWindow):
 
     def setSelectedScans(self):
         self.selectedScans = []
+        print(self.specFileList.selectedSpecFile)
         for i in self.specFileList.selectedSpecFile:
+            if i == min(self.specFileList.selectedSpecFile):
+                self.specDataSelector.loadCounters(self.specFileList.specFileArray[i].getSpecLabels())
             specDataFile = self.specFileList.specFileArray[i]
             scans = specDataFile.selectedScans
             print("Counter")
             print(i)
             for scan in scans:
                 self.selectedScans.append(scan)
+        self.updatePlot()
 
     def specDataTabChanged(self, index):
         self.specDataTab = index

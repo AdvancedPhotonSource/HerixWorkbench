@@ -43,7 +43,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setCentralWidget(self.windowSplitter)
 
     def CreateSpecDataSplitter(self):
-        """Creates the QSplitter with the spec and detector widgets."""
+        """Creates the QSplitter for the spec and detector widgets"""
         self.specSplitter = QSplitter()
         self.specSplitter.setFixedWidth(480)
         self.specSplitter.setOrientation(Qt.Vertical)
@@ -68,6 +68,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.specSplitter.addWidget(QWidget())
 
     def createMenuBar(self):
+        """Creates the Menu Bar"""
         menuBar = self.menuBar()
         menuBar.setNativeMenuBar(False)
         fileMenu = menuBar.addMenu("File")
@@ -225,24 +226,25 @@ class HerixWorkbenchWindow(QMainWindow):
             scanBrowser.scanList.clearSelection()
 
     def setSelectedScans(self):
+        """Gets the selected spec files, then gets their selected scans and adds them to a list.
+        """
         self.selectedScans = []
         print(self.specFileList.selectedSpecFile)
         for i in self.specFileList.selectedSpecFile:
+            #TODO: The fist spec file selected should load the counters, if deselected counters should be updated
             if i == min(self.specFileList.selectedSpecFile):
+                print("MIN", i)
                 self.specDataSelector.loadCounters(self.specFileList.specFileArray[i].getSpecLabels())
             specDataFile = self.specFileList.specFileArray[i]
             scans = specDataFile.selectedScans
-            print("Counter")
-            print(i)
             for scan in scans:
                 self.selectedScans.append(scan)
         self.updatePlot()
 
     def specDataTabChanged(self, index):
+        """Determines whether the counters or the ANA detectors are being plotted and updates the plot"""
         self.specDataTab = index
         self.PlotWidget.currentTab = index
-        print(index)
-        print("INdex")
         self.updatePlot()
 
 def main():

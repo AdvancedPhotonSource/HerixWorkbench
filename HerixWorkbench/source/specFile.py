@@ -102,5 +102,9 @@ class SpecFile(QObject):
             self.selectedScans.append(scan)
 
     def getSpecLabels(self):
-        return self.specFile.scans[str(self.selectedScans[0].scan)].L
+        if len(self.selectedScans) > 0:
+            return self.specFile.scans[str(self.selectedScans[0].scan)].L
+        else:
+            print("There's no scans selected")
+            return self.specFile.scans["1"].L
 

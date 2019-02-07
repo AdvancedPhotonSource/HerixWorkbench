@@ -43,19 +43,20 @@ class HerixWorkbenchWindow(QMainWindow):
         self.setCentralWidget(self.windowSplitter)
 
     def CreateSpecDataSplitter(self):
-        """Creates the QSplitter for the spec and detector widgets"""
+        """Initializes the specSplitter which contains the spec files, scans, scan type, plot type and
+         counters/analyzers"""
         self.specSplitter = QSplitter()
         self.specSplitter.setFixedWidth(480)
         self.specSplitter.setOrientation(Qt.Vertical)
         self.createPlotTypeComboBox()
 
-        self.specFileList = SpecFileSelectionList()
+        self.specFileList = SpecFileSelectionList() # List of spec files loaded
         self.specFileList.specFileChanged.connect(self.newSpecFileSelected)
         self.specFileList.noSpecFileSelected.connect(self.noSpecFileSelected)
-        self.scanDataSelector = ScanDataSelector()
-        self.scanTypeSelector = ScanTypeSelector()
+        self.scanDataSelector = ScanDataSelector()  # widget where scans are loaded
+        self.scanTypeSelector = ScanTypeSelector()  # widget that contains the scan types
         self.scanTypeSelector.scanTypeChanged.connect(self.filterScansByType)
-        self.specDataSelector = SpecDataSelector()
+        self.specDataSelector = SpecDataSelector()  # tabbed widget, displays counters/ana detectors for plotting
         self.specDataSelector.detectorsSelected.connect(self.setSelectedPlotDetectors)
         self.specDataSelector.countersSelected.connect(self.setSelectedCounters)
         self.specDataSelector.tabChanged.connect(self.specDataTabChanged)
@@ -99,6 +100,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.plotTypeWidget.setLayout(hLayout)
 
     def openSpecFile(self):
+        """Loads a spec file to the SpecFileList widget"""
         file, specFilterName = QFileDialog.getOpenFileName(self, "Open spec file", None, "*.spec")
         self.specFile = None
 
@@ -110,14 +112,14 @@ class HerixWorkbenchWindow(QMainWindow):
                                     "There was an error loading the spec file. \n\nException: " + str(ex))
 
     def loadScans(self, i):
-        """Loads the spec information to specguiutils widgets.
+        """Loads the scans to the scanbrowser widget from the opened spec file.
         :return:
         """
         specDataFile = self.specFileList.specFileArray[i]
-        indx = self.getSpecFileSelectorIndex(specDataFile)
+        indx = self.getSpecFileSelectorIndex(specDataFile)  # indicates which scanbrowser to use
         scanBrowser = self.scanDataSelector.scanBrowserArray[indx]
         scanBrowser.loadScans(specDataFile.getScans())
-        self.updateScanTypeSelector()
+        self.updateScanTypeSelector()  #
         scanBrowser.scanSelected.connect(specDataFile.scanSelection)
         scanBrowser.scanSelected.connect(self.setSelectedScans)
         scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -128,8 +130,8 @@ class HerixWorkbenchWindow(QMainWindow):
             self.specDataSelector.loadCounters(specDataFile.getSpecLabels())
 
     def updateScanTypeSelector(self):
-        if self.scanTypeSelector.getCurrentType() != 'All':
-            self.clearScanBrowsersSelection()
+        """Reloads the scan types"""
+        #TODO: I need to load the scans with the selected scan type
         self.scanTypeSelector.loadScans(self.getAllScanTypes())
         self.filterScansByType()
 
@@ -219,6 +221,7 @@ class HerixWorkbenchWindow(QMainWindow):
         return scanTypes
 
     def clearScanBrowsersSelection(self):
+        """Clears the selected """
         for i in self.specFileList.selectedSpecFile:
             specDataFile = self.specFileList.specFileArray[i]
             indx = self.getSpecFileSelectorIndex(specDataFile)

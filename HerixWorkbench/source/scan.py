@@ -6,14 +6,16 @@ See LICENSE file.
 """
 # -------------------------------------------Imports-------------------------------------------------------------------#
 from __future__ import unicode_literals
-from PyQt5.QtCore import QObject
+import PyQt5.QtCore as qtCore
 from PyQt5.QtWidgets import QMessageBox
 
 import os
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
-class Scan(QObject):
+class Scan(qtCore.QObject):
+    """Scan object class, gets information for a particular scan
+    """
 
     def __init__(self, scan, specFile):
         super(Scan, self).__init__(parent=None)
@@ -34,8 +36,8 @@ class Scan(QObject):
             try:
                 return self.specDataFile.data[detector]
             except Exception as ex:
-                QMessageBox.warning(None, "Error", "There was an error retrieving the counter data from the spec file. "
-                                                   " \n\nError: " + str(ex))
+                #TODO: Need to figure out what to do with this error message, record it or completely get rid of it
+                print("Error retriving counter data. \n\n" + str(ex))
                 return 0
 
     def getAnas_diam(self):

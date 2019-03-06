@@ -16,6 +16,7 @@ from HerixWorkbench.tools.specDataSelector import SpecDataSelector
 from specguiutils.scantypeselector import ScanTypeSelector
 from HerixWorkbench.source.PlotWidget import PlotWidget
 from HerixWorkbench.tools.SpecFileSelector import SpecFileSelectionList
+from HerixWorkbench.tools.fit_dialog import FitDialog
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -71,6 +72,7 @@ class HerixWorkbenchWindow(QMainWindow):
         menuBar = self.menuBar()
         menuBar.setNativeMenuBar(False)
         fileMenu = menuBar.addMenu("File")
+        fitMenu = menuBar.addMenu("Fit")
 
         openAction = QAction("Open", self)
         openAction.triggered.connect(self.openSpecFile)
@@ -78,9 +80,20 @@ class HerixWorkbenchWindow(QMainWindow):
         exitAction = QAction("Exit", self)
         exitAction.triggered.connect(self.close)
 
+        voigtAction = QAction("Voigt Fit", self)
+        voigtAction.triggered.connect(self.voigtFit)
+
         fileMenu.addAction(openAction)
         fileMenu.addSeparator()
         fileMenu.addAction(exitAction)
+
+        fitMenu.addAction(voigtAction)
+
+    def voigtFit(self):
+        if len(self.selectedScans) == 1 and len(self.selectedDetectors) == 1:
+            scan = self.selectedScans[0]
+            fitDialog = FitDialog()
+            fitDialog.setData(scan.getSpecDetectorData(self.selectedDetectors[0]))
 
     def createPlotTypeComboBox(self):
         """Creates the plot type QComboBox:single or multi."""
@@ -109,7 +122,8 @@ class HerixWorkbenchWindow(QMainWindow):
                                     "There was an error loading the spec file. \n\nException: " + str(ex))
 
     def loadScans(self, i):
-        """Loads the spec information to specguiutils widgets.
+        """Loads the information of the selected spec file.
+        :param i: index of the selected spec file
         :return:
         """
         specDataFile = self.specFileList.specFileArray[i]
@@ -127,8 +141,10 @@ class HerixWorkbenchWindow(QMainWindow):
             self.specDataSelector.loadCounters(specDataFile.getSpecLabels())
 
     def updateScanTypeSelector(self):
-        if self.scanTypeSelector.getCurrentType() != 'All':
-            self.clearScanBrowsersSelection()
+        """Updates the scan types in the scan type selector, then it filters
+        the scans by the
+        :return:
+        """
         self.scanTypeSelector.loadScans(self.getAllScanTypes())
         self.filterScansByType()
 
@@ -149,6 +165,28 @@ class HerixWorkbenchWindow(QMainWindow):
                 scanBrowser.filterByScanTypes(specDataFile.getScans(), self.scanTypeSelector.getCurrentType())
                 scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
                 self.specDataSelector.loadCounters(specDataFile.getSpecLabels())
+
+    def setScanBrowserSelectionMode(self, mode):
+        """Sets the selection mode for the particular scan using an int either 0 - 1
+        to distinguish how to proceed
+        0: scanTypeSelector has as its value, ALL --> Single Selection
+        1: a scan type has been selected from the scanTypeSelector --> Multi Selection
+        :param mode: int that determines which selection mode to assign the scanBrowser
+        :return:
+        """
+        for i in self.specFileList.selectedSpecFile:
+            specDataFile = self.specFileList.specFileArray[i]
+            indx = self.getSpecFileSelectorIndex(specDataFile)
+            scanBrowser = self.scanDataSelector.scanBrowserArray[indx]
+            if mode == 0:
+                scanBrowser.loadScans(specDataFile.getScans())
+                scanBrowser.scanList.setSelectionMode(QAbstractItemView.SingleSelection)
+            elif mode == 1:
+                scanBrowser.filterByScanTypes(specDataFile.getScans(), self.scanTypeSelector.getCurrentType())
+                scanBrowser.scanList.setSelectionMode(QAbstractItemView.MultiSelection)
+                self.specDataSelector.loadCounters(specDataFile.getSpecLabels())
+
+
 
     def setSelectedPlotDetectors(self, detectors):
         """Method will be called when a detector is selected or unselected. """
@@ -228,6 +266,7 @@ class HerixWorkbenchWindow(QMainWindow):
         self.selectedScans = []
         print(self.specFileList.selectedSpecFile)
         for i in self.specFileList.selectedSpecFile:
+            print("min: ",  min(self.specFileList.selectedSpecFile))
             if i == min(self.specFileList.selectedSpecFile):
                 self.specDataSelector.loadCounters(self.specFileList.specFileArray[i].getSpecLabels())
             specDataFile = self.specFileList.specFileArray[i]

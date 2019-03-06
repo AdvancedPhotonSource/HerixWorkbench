@@ -55,6 +55,7 @@ class ScanBrowser(qtWidgets.QWidget):
         self.userParamsToDisplay = []
         self.lastScans = None
         self.scanList = qtWidgets.QTableWidget()
+        self.prevSelectedScans = {}
         #
         font = qtGui.QFont("Helvetica", pointSize=10)
         self.scanList.setFont(font)
@@ -89,6 +90,7 @@ class ScanBrowser(qtWidgets.QWidget):
         """
         logger.debug(METHOD_ENTER_STR)
         self.lastScans = scans
+        print("Last Scans: \n", self.lastScans)
         self.scanList.itemSelectionChanged.disconnect(self.scanSelectionChanged)
         self.scanList.setRowCount(len(scans.keys()))
         scanKeys = sorted(scans, key=int)
@@ -101,7 +103,10 @@ class ScanBrowser(qtWidgets.QWidget):
             self.scanList.setItem(row, CMD_COL, cmdItem)
             nPointsItem = qtWidgets.QTableWidgetItem(str(len(scans[scan].data_lines)))
             self.scanList.setItem(row, NUM_PTS_COL, nPointsItem)
-            shiftItem = LineShifter()
+            if scan in self.prevSelectedScans:
+                shiftItem = LineShifter(True, self.prevSelectedScans[scan])
+            else:
+                shiftItem = LineShifter(False, 0)
             shiftItem.setScanNum(scan)
             shiftItem.shifterChanged.connect(self.shifterValueChanged)
             self.scanList.setCellWidget(row, SHIFT_COL, shiftItem)
@@ -164,13 +169,14 @@ class ScanBrowser(qtWidgets.QWidget):
         selects scans fron the list that have a given scan Type and
         causes these to be loaded into the scan table.
         """
+        print("Filter by scan")
         filteredScans = {}
         scanKeys = sorted(scans, key=int)
         if scanTypes is None:
             raise ValueError("Invalid ScanFilter %s" % scanTypes)
         for scan in scanKeys:
             if len(scanTypes) > 0:
-                if self.isNumber(scans[scan].scanCmd.split()[1]) is True:
+                if self.isNumber(scans[scan].scanCmd.split()[1]):
                     thisType = scans[scan].scanCmd.split()[0]
                 else:
                     thisType = scans[scan].scanCmd.split()[0] + " " + scans[scan].scanCmd.split()[1]
@@ -179,6 +185,11 @@ class ScanBrowser(qtWidgets.QWidget):
             else:
                 filteredScans[scan] = scans[scan]
         logger.debug ("Filtered Scans %s" % filteredScans)
+
+        self.scanList.itemSelectionChanged.disconnect(self.scanSelectionChanged)
+        self.scanList.clearSelection()
+        self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
+        self.setCurrentScan(0)
         self.loadScans(filteredScans, newFile=False)
 
     def isNumber(self, value):
@@ -232,7 +243,7 @@ class ScanBrowser(qtWidgets.QWidget):
 
     @qtCore.pyqtSlot()
     def scanSelectionChanged(self):
-        """This method runs when a scans are selected.
+        """This method runs when a scan ix selected.
         """
         logger.debug(METHOD_ENTER_STR)
         selectedItems = self.scanList.selectedIndexes()
@@ -244,35 +255,57 @@ class ScanBrowser(qtWidgets.QWidget):
                 shifter = self.scanList.cellWidget(item.row(), 3)
                 shifter.setEnabled(True)
                 selectedScans.append(scan)
+                # Deletes the scan from previously selected scans, if it's still selected
+                if scan in self.prevSelectedScans:
+                    del self.prevSelectedScans[scan]
+
+        # Sets the shifter of the unselected scans enable to false
+        for s in self.prevSelectedScans:
+            print("Prev: ", s)
+            shifter = self.scanList.cellWidget(int(s)-1, 3)
+            shifter.setValue(0)
+            shifter.setEnabled(False)
+        self.prevSelectedScans.clear()
+
         logger.debug("Selected scans %s" % selectedScans)
+        for sScan in selectedScans:
+            shifter = self.scanList.cellWidget(int(sScan)-1, 3)
+            self.prevSelectedScans.update({sScan: shifter.value()})
+            print("Previously Selected: ", self.prevSelectedScans)
+
         self.scanSelected[list].emit(selectedScans)
 
     def setSpecFile(self, file):
         self.specFile = file
 
     @qtCore.pyqtSlot(list)
-    def shifterValueChanged(self, infoList):
-        infoList.append(self.specFile)
-        self.shifterChanged[list].emit(infoList)
+    def shifterValueChanged(self, shiftInfo):
+        """This method emits a signal, passing a list, shiftInfo --> (has scanNum, shiftVal, specFile)
+        """
+        shiftInfo.append(self.specFile)
+        self.prevSelectedScans.update({shiftInfo[0]: shiftInfo[1]})
+        self.shifterChanged[list].emit(shiftInfo)
 
 
 class LineShifter(qtWidgets.QDoubleSpinBox):
-    """This class creates a QSpinBox widget that will raise an event to shift the function graphed in PlotWidget."""
+    """This class creates a QSpinBox widget that will raise an event to shift the function graphed in PlotWidget.
+    """
     shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
 
-    def __init__(self):
+    def __init__(self, enabled, shiftValue):
         super(LineShifter, self).__init__(parent=None)
         self.setDecimals(3)
+        self.setSingleStep(.1)
         self.row = ""
-        self.setEnabled(False)
+        self.setEnabled(enabled)
         self.setMaximum(100)
         self.setMinimum(-100)
+        self.setValue(shiftValue)
         self.valueChanged.connect(self.shiftValue)
-        self.setSingleStep(.1)
 
     def setScanNum(self, val):
         self.row = val
 
     def shiftValue(self, val):
-        info = list([self.row, val])
-        self.shifterChanged[list].emit(info)
+        shiftInfo = list([self.row, val])
+        self.shifterChanged[list].emit(shiftInfo)

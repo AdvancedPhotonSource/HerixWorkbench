@@ -6,15 +6,16 @@ See LICENSE file.
 """
 # -------------------------------------------Imports-------------------------------------------------------------------#
 from __future__ import unicode_literals
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+import PyQt5.QtCore as qtCore
+import PyQt5.QtWidgets as qtWidget
 from spec2nexus.spec import SpecDataFile, SpecDataFileHeader
 from HerixWorkbench.source.scan import Scan
 
 import os
 # ---------------------------------------------------------------------------------------------------------------------#
 
-class SpecFile(QObject):
+class SpecFile(qtCore.QObject):
+    """Spec file object. Gets information for the spec file loaded in the program"""
 
     def __init__(self, specPath):
         super(SpecFile, self).__init__(parent=None)
@@ -26,6 +27,8 @@ class SpecFile(QObject):
         self.selectedScans = []
 
     def getSpecFilePath(self):
+        """:return: gets the path of the spec file
+        """
         return self.specFilePath
 
     def getSpecFileName(self):
@@ -72,7 +75,8 @@ class SpecFile(QObject):
 
             return anas_o
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
+            qtWidget.QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: "
+                                         + str(ex))
             return None
 
     def getAnalyzersHKLPlacements(self):
@@ -91,7 +95,7 @@ class SpecFile(QObject):
 
             return anas_h
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the HKL placements. \n\nError: " + str(ex))
+            qtWidget.QMessageBox.warning(None, "Error", "There was an error retrieving the HKL placements. \n\nError: " + str(ex))
             return None
 
     def scanSelection(self, scans):
@@ -102,5 +106,12 @@ class SpecFile(QObject):
             self.selectedScans.append(scan)
 
     def getSpecLabels(self):
-        return self.specFile.scans[str(self.selectedScans[0].scan)].L
+        print("Selected Scans: ", len(self.selectedScans))
+        print(self.selectedScans)
+        if len(self.selectedScans) > 0:
+            return self.specFile.scans[str(self.selectedScans[0].scan)].L
+        else:
+            qtWidget.QMessageBox.warning(None, "Error",
+                                         "You must select a scan for the counters to display.")
+            return ["No", "Scan", "Selected"]
 

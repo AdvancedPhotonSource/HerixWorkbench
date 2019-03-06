@@ -256,33 +256,34 @@ class PlotWidget(QObject):
                 ax.set_ylabel(str(detector))
                 ax.set_xlabel(xLabel)
 
-    def shifterChanged(self, info):
-        scans = []
-        scan = info[0]
-        value = info[1]
-        specFile = info[2]
-        print(info)
+    def shifterChanged(self, shiftInfo):
+        scan, value, specFile = shiftInfo
         for s in self.scans:
-            print(s.scan)
             if s.getSpecFileName() == specFile and s.scan == scan:
                 s.setShifter(value)
-                scans.append(s)
-            elif s.getSpecFileName() == specFile:
-                scans.append(s)
-        print(scans)
+
+        # Calls singlePlot if plotType is "Singlge", else multiPlot
         if self.currentTab == 0:
-            self.counterPlot(self.counters, scans)
+            self.counterPlot(self.counters, self.scans)
         else:
             plotType = self.mainWindow.plotTypeCB.currentText()
             if plotType == "Single":
-                self.singlePlot(self.detectors, scans)
+                self.singlePlot(self.detectors, self.scans)
             else:
-                self.multiPlot(self.detectors, scans)
+                self.multiPlot(self.detectors, self.scans)
 
     def counterPlot(self, counters, scans):
+        """
+        :param counters: counters to be plot
+        :param scans: scans to be plot
+        :return:
+        """
+        print("Counters: \n", counters)
         self.counters = counters
         self.scans = scans
         self.clearPlot()
+
+        #TODO: might not need this if here. Will counters ever have a value less than 3
         if len(counters) == 0:
             self.defaultPlot()
         else:
@@ -296,32 +297,39 @@ class PlotWidget(QObject):
             self.canvas.draw()
 
     def counterPlotUtils(self, ax, scans, xCounter, yCounter, normalizer):
-        if len(scans) > 0:
-            for scan in scans:
-                print('Scan: ' + str(scan.scan))
-                print(scan.shiftValue)
-                xx = scan.getSpecDetectorData(xCounter)
-                yy = scan.getSpecDetectorData(yCounter)
+        try:
+            if len(scans) > 0:
+                for scan in scans:
+                    print("Method: counterPlotUtils")
+                    print('Scan: ' + str(scan.scan))
+                    print("ShifValue: ", scan.shiftValue)
+                    print("SpecFile: ", scan.getSpecFileName())
+                    print("End of Method: counterPlotUtils")
+                    xx = scan.getSpecDetectorData(xCounter)
+                    yy = scan.getSpecDetectorData(yCounter)
 
-                maximum = max(yy)
-                maxIndx = yy.index(maximum)
-                maxPos = xx[maxIndx]
-                scan.maxPos = maxPos
-                scan.max = maximum
+                    maximum = max(yy)
+                    maxIndx = yy.index(maximum)
+                    maxPos = xx[maxIndx]
+                    scan.maxPos = maxPos
+                    scan.max = maximum
 
-                if normalizer.find("PyQt") == -1:
-                    mon = scan.getSpecDetectorData(normalizer)
-                    yy = np.divide(yy, mon)
+                    if normalizer.find("PyQt") == -1:
+                        mon = scan.getSpecDetectorData(normalizer)
+                        yy = np.divide(yy, mon)
 
-                if scan.shiftValue is not 0:
-                    xx = np.add(xx, scan.shiftValue)
+                    if scan.shiftValue is not 0:
+                        xx = np.add(xx, scan.shiftValue)
 
-                label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
-                #self.legendList.addLabel(str(label))
-                plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
-                self.legendList.addLegend(label, 0, 0, 0, 0, 0, 0, plot[0].get_color(), maximum, maxPos)
-                ax.set_ylabel(yCounter)
-                ax.set_xlabel(xCounter)
+                    label = (str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                    plot = ax.plot(xx, yy, label=str(scan.getSpecFileName()) + " " + str(scan.getScanNumber()))
+                    self.legendList.addLegend(label, 0, 0, 0, 0, 0, 0, plot[0].get_color(), maximum, maxPos)
+                    ax.set_ylabel(yCounter)
+                    ax.set_xlabel(xCounter)
+        except Exception as ex:
+            QMessageBox.warning(None, "Error", "Please make sure the scan " + scan.scan + " from the spec file " +
+                                scan.getSpecFileName() + " contains the counters trying to be plotted. "
+                                               " \n\nError: " + str(ex))
 
 class PlotLegendList(QTabWidget):
     """It uses a QListWidget to display the legend information."""

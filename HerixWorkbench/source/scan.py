@@ -14,7 +14,7 @@ import os
 
 
 class Scan(qtCore.QObject):
-    """Scan object class, gets information for a particular scan
+    """Scan object class, gets information for a particular scans
     """
 
     def __init__(self, scan, specFile):

@@ -1,13 +1,20 @@
+#!/usr/bin/env python
+
 """
- Copyright (c) 2017, UChicago Argonne, LLC
- See LICENSE file.
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
 """
+# -------------------------------------------Imports-------------------------------------------------------------------#
 import PyQt5.QtWidgets as qtWidgets
 import PyQt5.QtCore as qtCore
 import PyQt5.QtGui as qtGui
 from PyQt5.Qt import QValidator
 import logging
+import gc
 from specguiutils import METHOD_ENTER_STR
+from HerixWorkbench.tools.scan import Scan
+# ---------------------------------------------------------------------------------------------------------------------#
+
 logger = logging.getLogger(__name__)
 
 SCAN_COL_WIDTH = 40
@@ -20,6 +27,7 @@ CMD_COL = 1
 NUM_PTS_COL = 2
 SHIFT_COL = 3
 DEFAULT_COLUMN_NAMES = ['S#', 'Command', 'Points', 'Shift']
+
 
 class ScanBrowser(qtWidgets.QWidget):
     """
@@ -36,9 +44,12 @@ class ScanBrowser(qtWidgets.QWidget):
     column to the table for each positioner listed in the scan.  The list of
     positioners is given in the #P fields in the file header and the values
     to display are from the corresponding #O values in the scan header.
+
+    This class was made by John Hammonds, it's from his package specguiutils.
+    I made some changes to better fit my program.
     """
     # Define some signals that this class will provide to users
-    scanSelected = qtCore.pyqtSignal(list, name="scanSelected")
+    scanSelected = qtCore.pyqtSignal(dict, name="scanSelected")
     scanLoaded = qtCore.pyqtSignal(bool, name="scanLoaded")
     shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
 
@@ -56,7 +67,10 @@ class ScanBrowser(qtWidgets.QWidget):
         self.lastScans = None
         self.scanList = qtWidgets.QTableWidget()
         self.prevSelectedScans = {}
-        #
+        self.scans = {}
+        self.scanType = "All"
+        self.primaryScan = None  # Last selected scan
+
         font = qtGui.QFont("Helvetica", pointSize=10)
         self.scanList.setFont(font)
         self.scanList.setEditTriggers(qtWidgets.QAbstractItemView.NoEditTriggers)
@@ -75,11 +89,15 @@ class ScanBrowser(qtWidgets.QWidget):
         layout.addWidget(self.scanList)
         self.setLayout(layout)
 
-        self.show()
-
         self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
 
-    def loadScans(self, scans, newFile=True):
+    def loadScans(self, scans, specFile):
+        """Creates a Scan() and fills the scans dictionary.
+        """
+        for scan in scans:
+            self.scans.update({scan: Scan(scan, specFile)})
+
+    def loadScanBrowser(self, scans, newFile=True):
         """
         loads the list of scans into the browser. At the end, it will
         pass emit a message that the scan is loaded and from the input
@@ -90,27 +108,30 @@ class ScanBrowser(qtWidgets.QWidget):
         """
         logger.debug(METHOD_ENTER_STR)
         self.lastScans = scans
-        print("Last Scans: \n", self.lastScans)
         self.scanList.itemSelectionChanged.disconnect(self.scanSelectionChanged)
         self.scanList.setRowCount(len(scans.keys()))
         scanKeys = sorted(scans, key=int)
         logger.debug("scanKeys %s" % str(scanKeys))
         row = 0
-        for scan in scanKeys:
-            scanItem = qtWidgets.QTableWidgetItem(str(scans[scan].scanNum))
+        for key in scanKeys:
+            scan = self.scans[key]
+            scan.tableRow = row
+
+            scanItem = qtWidgets.QTableWidgetItem(str(scans[key].scanNum))
             self.scanList.setItem(row, SCAN_COL, scanItem)
-            cmdItem = qtWidgets.QTableWidgetItem(scans[scan].scanCmd)
+
+            cmdItem = qtWidgets.QTableWidgetItem(scans[key].scanCmd)
             self.scanList.setItem(row, CMD_COL, cmdItem)
-            nPointsItem = qtWidgets.QTableWidgetItem(str(len(scans[scan].data_lines)))
+
+            nPointsItem = qtWidgets.QTableWidgetItem(str(len(scans[key].data_lines)))
             self.scanList.setItem(row, NUM_PTS_COL, nPointsItem)
-            if scan in self.prevSelectedScans:
-                shiftItem = LineShifter(True, self.prevSelectedScans[scan])
-            else:
-                shiftItem = LineShifter(False, 0)
-            shiftItem.setScanNum(scan)
-            shiftItem.shifterChanged.connect(self.shifterValueChanged)
+
+            shiftItem = LineShifter()
+            shiftItem.valueChanged.connect(self.shifterValueChanged)
+            scan.plotShifter = shiftItem
             self.scanList.setCellWidget(row, SHIFT_COL, shiftItem)
             row += 1
+
         self.fillSelectedPositionerData()
         self.fillSelectedUserParamsData()
         self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
@@ -180,17 +201,20 @@ class ScanBrowser(qtWidgets.QWidget):
                     thisType = scans[scan].scanCmd.split()[0]
                 else:
                     thisType = scans[scan].scanCmd.split()[0] + " " + scans[scan].scanCmd.split()[1]
+
                 if thisType in scanTypes:
                     filteredScans[scan] = scans[scan]
             else:
                 filteredScans[scan] = scans[scan]
         logger.debug ("Filtered Scans %s" % filteredScans)
 
+        self.clear()
+        return filteredScans
+
+    def clear(self):
         self.scanList.itemSelectionChanged.disconnect(self.scanSelectionChanged)
         self.scanList.clearSelection()
         self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
-        self.setCurrentScan(0)
-        self.loadScans(filteredScans, newFile=False)
 
     def isNumber(self, value):
         try:
@@ -209,7 +233,6 @@ class ScanBrowser(qtWidgets.QWidget):
         """
         Sets the current scan selection
         """
-        logger.debug(METHOD_ENTER_STR)
         self.scanList.setCurrentCell(row, 0)
 
     def setPositionersToDisplay(self, positioners):
@@ -241,50 +264,54 @@ class ScanBrowser(qtWidgets.QWidget):
         self.fillSelectedPositionerData()
         self.fillSelectedUserParamsData()
 
-    @qtCore.pyqtSlot()
     def scanSelectionChanged(self):
         """This method runs when a scan ix selected.
         """
+        print("scan_selection_scanBrowser")
         logger.debug(METHOD_ENTER_STR)
         selectedItems = self.scanList.selectedIndexes()
+
+        #  Ensures that there must be a scan selected
+        if len(selectedItems) == 0:
+            self.scanList.itemSelectionChanged.disconnect(self.scanSelectionChanged)
+            self.setCurrentScan(self.prevSelectedScans[next(iter(self.prevSelectedScans))].tableRow)
+            self.scanList.itemSelectionChanged.connect(self.scanSelectionChanged)
+            return
+
         logger.debug("SelectedItems %s" % selectedItems)
-        selectedScans = []
+        selectedScans = {}
         for item in selectedItems:
             if item.column() == 0:
-                scan = str(self.scanList.item(item.row(), 0).text())
+                scanNum = str(self.scanList.item(item.row(), 0).text())
+                scan = self.scans[scanNum]
+                scan.createDetectorInfoDictionary()
                 shifter = self.scanList.cellWidget(item.row(), 3)
                 shifter.setEnabled(True)
-                selectedScans.append(scan)
+                selectedScans.update({scanNum: scan})
+
                 # Deletes the scan from previously selected scans, if it's still selected
-                if scan in self.prevSelectedScans:
-                    del self.prevSelectedScans[scan]
+                if scanNum in self.prevSelectedScans:
+                    self.prevSelectedScans.pop(scanNum, None)
 
         # Sets the shifter of the unselected scans enable to false
         for s in self.prevSelectedScans:
-            print("Prev: ", s)
-            shifter = self.scanList.cellWidget(int(s)-1, 3)
+            scan = self.scans[s]
+            shifter = self.scanList.cellWidget(scan.tableRow, 3)
             shifter.setValue(0)
             shifter.setEnabled(False)
+            shifter.clearFocus()
         self.prevSelectedScans.clear()
 
         logger.debug("Selected scans %s" % selectedScans)
-        for sScan in selectedScans:
-            shifter = self.scanList.cellWidget(int(sScan)-1, 3)
-            self.prevSelectedScans.update({sScan: shifter.value()})
-            print("Previously Selected: ", self.prevSelectedScans)
+        self.prevSelectedScans = selectedScans
 
-        self.scanSelected[list].emit(selectedScans)
+        self.scanSelected[dict].emit(selectedScans)
 
-    def setSpecFile(self, file):
-        self.specFile = file
 
-    @qtCore.pyqtSlot(list)
-    def shifterValueChanged(self, shiftInfo):
+    def shifterValueChanged(self, val):
         """This method emits a signal, passing a list, shiftInfo --> (has scanNum, shiftVal, specFile)
         """
-        shiftInfo.append(self.specFile)
-        self.prevSelectedScans.update({shiftInfo[0]: shiftInfo[1]})
-        self.shifterChanged[list].emit(shiftInfo)
+        self.scanSelected[dict].emit(self.prevSelectedScans)
 
 
 class LineShifter(qtWidgets.QDoubleSpinBox):
@@ -292,20 +319,18 @@ class LineShifter(qtWidgets.QDoubleSpinBox):
     """
     shifterChanged = qtCore.pyqtSignal(list, name="shifterChanged")
 
-    def __init__(self, enabled, shiftValue):
+    def __init__(self):
         super(LineShifter, self).__init__(parent=None)
         self.setDecimals(3)
         self.setSingleStep(.1)
         self.row = ""
-        self.setEnabled(enabled)
         self.setMaximum(100)
         self.setMinimum(-100)
-        self.setValue(shiftValue)
-        self.valueChanged.connect(self.shiftValue)
+        self.setEnabled(False)
+        self.setAttribute(qtCore.Qt.WA_MacShowFocusRect, False)
 
-    def setScanNum(self, val):
-        self.row = val
-
-    def shiftValue(self, val):
-        shiftInfo = list([self.row, val])
-        self.shifterChanged[list].emit(shiftInfo)
+    def value(self):
+        try:
+            return float(self.text())
+        except:
+            return 0

@@ -6,22 +6,27 @@ See LICENSE file.
 """
 # -------------------------------------------Imports-------------------------------------------------------------------#
 from __future__ import unicode_literals
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+import PyQt5.QtCore as qtCore
+import PyQt5.QtWidgets as qtWidgets
 from spec2nexus.spec import SpecDataFile, SpecDataFileHeader
-from HerixWorkbench.source.scan import Scan
+from HerixWorkbench.widgets.scan_browser import ScanBrowser
 
 import os
 # ---------------------------------------------------------------------------------------------------------------------#
 
-class SpecFile(QObject):
+
+class SpecFile(qtCore.QObject):
+
+    # Slots
+    reloadCounters = qtCore.pyqtSignal(object, name="reloadCounters")
+    scansSelected = qtCore.pyqtSignal(list, name="scansSelected")
 
     def __init__(self, specPath):
         super(SpecFile, self).__init__(parent=None)
         self.specFilePath = specPath
         self.specFile = SpecDataFile(specPath)
-        self.scanBrowserIndex = None
-        self.getAnalyzersHKLPlacements()
+        self.scanBrowser = ScanBrowser()
+        self.scanBrowser.loadScans(self.getScans(), self)
 
         self.selectedScans = []
 
@@ -30,6 +35,12 @@ class SpecFile(QObject):
 
     def getSpecFileName(self):
         return os.path.split(self.specFilePath)[1]
+
+    def getScans(self):
+        return self.specFile.scans
+
+    def getSpecLabels(self):
+        return self.specFile.scans[self.selectedScans[0].scan].L
 
     def getScanTypes(self):
         """Gets the scan types from the spec file."""
@@ -46,17 +57,12 @@ class SpecFile(QObject):
         return scanTypes
 
     def isNumber(self, value):
+        """Checks to make sure value is a number"""
         try:
             float(value)
             return True
         except ValueError:
             return False
-
-    def getScans(self):
-        """Gets scan from the spec file
-        :return: scans
-        """
-        return self.specFile.scans
 
     def getDiamPlacements(self):
         try:
@@ -66,13 +72,14 @@ class SpecFile(QObject):
             for i in range(len(oData)):
                 oLine = oData[i]
                 for j in range(len(oLine)):
-                    if oLine[j].find("Anal") == 0:
+                    if oLine[j].find("Ana") == 0:
                         ana = oLine[j].split("_")[0]
                         anas_o.update({str(ana): [i, j]})
 
+            print("anas_o: ", anas_o)
+
             return anas_o
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the anal_diam \n\nError: " + str(ex))
             return None
 
     def getAnalyzersHKLPlacements(self):
@@ -85,22 +92,39 @@ class SpecFile(QObject):
 
                 if hLine[0].find("T_Sample") == 0:
                     anas_h.update({'Temp': i})
-                if hLine[0].find("Anal") == 0:
+                if hLine[0].find("Ana") == 0:
                     ana = hLine[0].split("_")[0]
                     anas_h.update({str(ana): i})
-
+            print("anas_h: ", anas_h)
             return anas_h
         except Exception as ex:
-            QMessageBox.warning(None, "Error", "There was an error retrieving the HKL placements. \n\nError: " + str(ex))
             return None
 
     def scanSelection(self, scans):
-        self.selectedScans = []
-        for s in scans:
-            scan = Scan(s, self)
-            print(scan.getScanNumber())
-            self.selectedScans.append(scan)
+        """Loads the selectedScans list from the scans dictionary.
+        """
+        print(self.getSpecFileName(), " scan selection method.")
+        self.selectedScans = []  # Clears the list before adding the scans
+        for scan in scans:
+            self.selectedScans.append(scans[scan])
 
-    def getSpecLabels(self):
-        return self.specFile.scans[str(self.selectedScans[0].scan)].L
+        self.scanBrowser.primaryScan = self.selectedScans[0]
 
+        # If there is only one scan selected, it sends a
+        # signal to reload the counters
+        if len(self.selectedScans) == 1:
+            self.reloadCounters[object].emit(self)
+
+        self.scansSelected[list].emit(self.selectedScans)
+
+
+    def loadScanBrowser(self):
+        self.scanBrowser.loadScanBrowser(self.getScans())
+        self.scanBrowser.scanSelected.connect(self.scanSelection)
+        self.scanBrowser.scanList.setSelectionMode(qtWidgets.QAbstractItemView.SingleSelection)
+
+    def clearScanBrowserSelection(self):
+        self.scanBrowser.clear()
+        self.selectedScans.clear()
+        self.scanBrowser.prevSelectedScans.clear()
+        self.scanBrowser.scanList.clearSelection()

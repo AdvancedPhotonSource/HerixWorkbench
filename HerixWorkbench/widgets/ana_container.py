@@ -11,14 +11,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 # ----------------------------------------End of Imports---------------------------------------------------------------#
 
-class SelectorContainer(QWidget):
+
+class ANAContainer(QWidget):
     """Creates the group box with the detector check boxes."""
 
     # Signals
     detectorsSelected = pyqtSignal(list, name="detectorSelected")
 
     def __init__(self, parent=None):
-        super(SelectorContainer, self).__init__(parent)
+        super(ANAContainer, self).__init__(parent)
         self.detectorGroupBx = QGroupBox()
         hLayout = QHBoxLayout()
         self.detectorGroupBx.setTitle("Detectors")
@@ -89,7 +90,8 @@ class SelectorContainer(QWidget):
 
     def detectorCheckBoxState(self, i):
         """Emits a signal containing the list of the checked boxes when the state of one check box
-        has changed. """
+        has changed
+        """
         checkedDetectors = []
         for i in range(0, 9):
             if self.detectorCheckBoxes[i].checkState() == 2:
@@ -98,27 +100,33 @@ class SelectorContainer(QWidget):
         if self.detectorCheckBoxes[9].checkState() == 2:
             checkedDetectors.append("PIN-C")
 
-        print(checkedDetectors)
-
         self.detectorSelected[list].emit(checkedDetectors)
 
     def selectAllDetectorsState(self):
-        print(self.detectorCheckBoxes[10].checkState())
+        """Checks if the Select All checkbox is checked. If it is,
+        it makes sure the PIN-C detector is unchecked  and selected
+        the ANA detectors, else, it unchecks all the ANA detectors
+        """
+
         if self.detectorCheckBoxes[10].checkState() == 2:
             self.disconnectDetectorCheckBoxState()
+            self.detectorCheckBoxes[9].setCheckState(Qt.Unchecked)
             for i in range(0, 9):
                 self.detectorCheckBoxes[i].setCheckState(Qt.Checked)
             self.connectDetectorCheckBoxState()
             self.detectorCheckBoxState(1)
         else:
             self.disconnectDetectorCheckBoxState()
-            for i in range(0, 9):
+            for i in range(0, 10):
                 self.detectorCheckBoxes[i].setCheckState(Qt.Unchecked)
 
             self.connectDetectorCheckBoxState()
             self.detectorCheckBoxState(1)
 
     def disconnectDetectorCheckBoxState(self):
+        """Disconnects the detectors check boxes from the
+        detectorCheckBoxState method
+        """
         for i in range(0, 10):
             self.detectorCheckBoxes[i].stateChanged.disconnect(self.detectorCheckBoxState)
 

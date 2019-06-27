@@ -12,7 +12,7 @@ import sys
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from HerixWorkbench.tools.DetectorSelector import SelectorContainer
+from HerixWorkbench.widgets.ana_container import ANAContainer
 from specguiutils.counterselector import CounterSelector
 
 COUNTER_OPTS = ["X", "Y", "Mon"]
@@ -31,12 +31,12 @@ class SpecDataSelector(QTabWidget):
         super(SpecDataSelector, self).__init__(parent)
         self.counterSelector = CounterSelector(counterOpts=COUNTER_OPTS)
         self.counterSelector.counterView.counterDataChanged.connect(self.newCounterSelected)
-        self.selectorContainer = SelectorContainer()
-        self.selectorContainer.detectorsSelected.connect(self.anaDetectorSelected)
+        self.ANAContainer = ANAContainer()
+        self.ANAContainer.detectorsSelected.connect(self.anaDetectorSelected)
         self.currentChanged.connect(self.newTabChanged)
 
         self.addTab(self.counterSelector, "Spec Data")
-        self.addTab(self.selectorContainer, "Analyzers")
+        self.addTab(self.ANAContainer, "Analyzers")
 
     def anaDetectorSelected(self, detectors):
         self.detectorsSelected[list].emit(detectors)
